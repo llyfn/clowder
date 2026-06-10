@@ -51,6 +51,9 @@ struct SMCTests {
     @Test func encodesUi8() {
         #expect(SMCValueEncoder.encode(2, type: "ui8 ") == [2])
         #expect(SMCValueEncoder.encode(0, type: "ui8 ") == [0])
+        #expect(SMCValueEncoder.encode(255, type: "ui8 ") == [255])
+        #expect(SMCValueEncoder.encode(256, type: "ui8 ") == nil)
+        #expect(SMCValueEncoder.encode(-1, type: "ui8 ") == nil)
     }
 
     @Test func encoderRejectsUnknownType() {

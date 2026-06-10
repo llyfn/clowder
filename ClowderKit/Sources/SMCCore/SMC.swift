@@ -177,6 +177,8 @@ public final class SMCClient: SMCConnecting, @unchecked Sendable {
     }
 
     /// Writes raw bytes to a key. Requires root; unprivileged callers get an IOKit error.
+    /// keyInfo.dataType is intentionally omitted — AppleSMC uses its internal type record
+    /// for writes (the established pattern in open-source SMC writers).
     public func writeBytes(_ key: SMCKey, bytes: [UInt8]) throws {
         guard bytes.count <= 32, !bytes.isEmpty else {
             throw SensorError.readFailed("invalid write size \(bytes.count)")
