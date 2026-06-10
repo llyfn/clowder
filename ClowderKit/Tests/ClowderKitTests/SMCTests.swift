@@ -42,4 +42,23 @@ struct SMCTests {
         #expect(!TempsFansSource.isCPUTempKey("Tp01", celsius: 0))   // implausible readings dropped
         #expect(!TempsFansSource.isCPUTempKey("Tp01", celsius: 130))
     }
+
+    @Test func encodesFlt() {
+        // 48.5 → little-endian IEEE-754 float bytes (inverse of decodesFlt)
+        #expect(SMCValueEncoder.encode(48.5, type: "flt ") == [0x00, 0x00, 0x42, 0x42])
+    }
+
+    @Test func encodesUi8() {
+        #expect(SMCValueEncoder.encode(2, type: "ui8 ") == [2])
+        #expect(SMCValueEncoder.encode(0, type: "ui8 ") == [0])
+    }
+
+    @Test func encoderRejectsUnknownType() {
+        #expect(SMCValueEncoder.encode(1, type: "ch8*") == nil)
+    }
+
+    @Test func encodeDecodeRoundTrip() {
+        let bytes = SMCValueEncoder.encode(1820, type: "flt ")!
+        #expect(SMCValueDecoder.decode(type: "flt ", bytes: bytes) == 1820)
+    }
 }

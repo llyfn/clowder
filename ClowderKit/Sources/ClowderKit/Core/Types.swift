@@ -94,7 +94,3 @@ public struct SensorSnapshot: Sendable {
     }
 }
 
-public enum SensorError: Error, Equatable {
-    case readFailed(String)
-    case unavailable(String)
-}

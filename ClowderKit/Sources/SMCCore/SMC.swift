@@ -1,6 +1,11 @@
 import Foundation
 import IOKit
 
+public enum SensorError: Error, Equatable {
+    case readFailed(String)
+    case unavailable(String)
+}
+
 public struct SMCKey: Equatable, Hashable, Sendable {
     public let code: UInt32
 
@@ -101,9 +106,7 @@ struct SMCParamStruct {
 
 public final class SMCClient: SMCConnecting, @unchecked Sendable {
     private enum Selector: UInt8 {
-        case readKey = 5
-        // writeKey = 6 — reserved; write path arrives via the privileged helper
-        case keyAtIndex = 8, keyInfo = 9
+        case readKey = 5, writeKey = 6, keyAtIndex = 8, keyInfo = 9
     }
 
     private let connection: io_connect_t
@@ -171,5 +174,42 @@ public final class SMCClient: SMCConnecting, @unchecked Sendable {
         input.data8 = Selector.readKey.rawValue
         let output = try call(input)
         return withUnsafeBytes(of: output.bytes) { Array($0.prefix(Int(info.dataSize))) }
+    }
+
+    /// Writes raw bytes to a key. Requires root; unprivileged callers get an IOKit error.
+    public func writeBytes(_ key: SMCKey, bytes: [UInt8]) throws {
+        guard bytes.count <= 32, !bytes.isEmpty else {
+            throw SensorError.readFailed("invalid write size \(bytes.count)")
+        }
+        var input = SMCParamStruct()
+        input.key = key.code
+        input.keyInfo.dataSize = UInt32(bytes.count)
+        input.data8 = Selector.writeKey.rawValue
+        withUnsafeMutableBytes(of: &input.bytes) { buf in
+            for (i, b) in bytes.enumerated() { buf[i] = b }
+        }
+        _ = try call(input)
+    }
+}
+
+public protocol SMCWriting: Sendable {
+    func writeBytes(_ key: SMCKey, bytes: [UInt8]) throws
+    func readValue(_ key: SMCKey) -> Double?
+}
+extension SMCClient: SMCWriting {}
+
+public enum SMCValueEncoder {
+    /// Encodes a Double into SMC wire bytes. Returns nil for unsupported types.
+    public static func encode(_ value: Double, type: String) -> [UInt8]? {
+        switch type {
+        case "flt ":
+            let raw = Float(value).bitPattern.littleEndian
+            return withUnsafeBytes(of: raw) { Array($0) }
+        case "ui8 ":
+            guard value >= 0, value <= 255 else { return nil }
+            return [UInt8(value)]
+        default:
+            return nil
+        }
     }
 }
