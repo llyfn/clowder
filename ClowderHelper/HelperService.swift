@@ -69,11 +69,15 @@ final class HelperService: NSObject, ClowderHelperProtocol, @unchecked Sendable 
             fansManual = false
             return nil   // fanless: auto is trivially true
         }
+        var failures: [String] = []
         for i in 0..<Int(count) {
-            try? smc.writeBytes(SMCKey("F\(i)Md"), bytes: [0x00])
+            do { try smc.writeBytes(SMCKey("F\(i)Md"), bytes: [0x00]) }
+            catch { failures.append("fan \(i): \(error)") }
         }
+        // Auto restore is best-effort: report failures but treat manual mode as exited
+        // so the watchdog never re-fires for fans we can no longer control.
         fansManual = false
-        return nil
+        return failures.isEmpty ? nil : failures.joined(separator: "; ")
     }
 
     private func restoreDefaultsInternal() {
@@ -128,9 +132,17 @@ final class HelperService: NSObject, ClowderHelperProtocol, @unchecked Sendable 
                 clamped.append(target)
             }
             for (i, target) in clamped.enumerated() {
-                guard let bytes = SMCValueEncoder.encode(target, type: "flt ") else { continue }
-                try? smc.writeBytes(SMCKey("F\(i)Md"), bytes: [0x01])
-                try? smc.writeBytes(SMCKey("F\(i)Tg"), bytes: bytes)
+                guard let bytes = SMCValueEncoder.encode(target, type: "flt ") else {
+                    return reply("fan \(i): could not encode \(Int(target)) rpm")
+                }
+                do {
+                    try smc.writeBytes(SMCKey("F\(i)Md"), bytes: [0x01])
+                    try smc.writeBytes(SMCKey("F\(i)Tg"), bytes: bytes)
+                } catch {
+                    // Don't claim manual mode on failure; restore what we touched.
+                    _ = setFansAutoInternal()
+                    return reply("fan \(i): write failed (\(error))")
+                }
             }
             fansManual = true
             lastHeartbeat = Date()   // a control action counts as liveness
