@@ -10,16 +10,20 @@ struct PanelView: View {
 
     @State private var expanded: ModuleID?
 
-    private let columns = [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)]
-
     var body: some View {
         GlassEffectContainer {
             VStack(spacing: 10) {
-                LazyVGrid(columns: columns, spacing: 10) {
-                    expandableTile(.cpu, collapsed: environment.cpu.tileView,
-                                   expanded: AnyView(CPUExpandedView(module: environment.cpu)))
-                    expandableTile(.temps, collapsed: environment.temps.tileView,
-                                   expanded: AnyView(TempsExpandedView(module: environment.temps)))
+                HStack(alignment: .top, spacing: 10) {
+                    expandableTile(.cpu, collapsed: environment.cpu.tileView)
+                    expandableTile(.temps, collapsed: environment.temps.tileView)
+                }
+                if expanded == .cpu {
+                    detailCard(AnyView(CPUExpandedView(module: environment.cpu)))
+                }
+                if expanded == .temps {
+                    detailCard(AnyView(TempsExpandedView(module: environment.temps)))
+                }
+                HStack(alignment: .top, spacing: 10) {
                     tile(environment.memory.tileView)
                     tile(networkDiskTile)
                 }
@@ -49,14 +53,19 @@ struct PanelView: View {
             .glassEffect(.regular, in: .rect(cornerRadius: 14))
     }
 
-    private func expandableTile(_ id: ModuleID, collapsed: AnyView, expanded expandedView: AnyView) -> some View {
-        Group {
-            if expanded == id { expandedView } else { collapsed }
-        }
-        .glassEffect(.regular, in: .rect(cornerRadius: 14))
-        .onTapGesture {
-            withAnimation(.snappy) { expanded = expanded == id ? nil : id }
-        }
+    private func expandableTile(_ id: ModuleID, collapsed: AnyView) -> some View {
+        collapsed
+            .glassEffect(.regular, in: .rect(cornerRadius: 14))
+            .onTapGesture {
+                withAnimation(.snappy) { expanded = expanded == id ? nil : id }
+            }
+    }
+
+    private func detailCard(_ content: AnyView) -> some View {
+        content
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .glassEffect(.regular, in: .rect(cornerRadius: 14))
+            .transition(.opacity.combined(with: .move(edge: .top)))
     }
 
     private var footer: some View {
