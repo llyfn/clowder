@@ -30,6 +30,7 @@ public struct DarwinMemorySource: MemorySource {
 
     public func sample() throws -> MemorySample {
         var stats = vm_statistics64()
+        // HOST_VM_INFO64_COUNT: sizeof(vm_statistics64) / sizeof(integer_t); the C macro is unavailable in Swift.
         var count = mach_msg_type_number_t(MemoryLayout<vm_statistics64>.size / MemoryLayout<integer_t>.size)
         let result = withUnsafeMutablePointer(to: &stats) {
             $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
@@ -38,7 +39,6 @@ public struct DarwinMemorySource: MemorySource {
         }
         guard result == KERN_SUCCESS else { throw SensorError.readFailed("host_statistics64: \(result)") }
         var pageSize: vm_size_t = 0
-        var pageSizeCount: mach_msg_type_number_t = 0
         let psResult = host_page_size(mach_host_self(), &pageSize)
         guard psResult == KERN_SUCCESS else { throw SensorError.readFailed("host_page_size: \(psResult)") }
         return MemorySample(

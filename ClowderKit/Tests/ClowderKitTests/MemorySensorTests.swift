@@ -20,5 +20,6 @@ struct MemorySensorTests {
         #expect(pressure(75) == .warning)
         #expect(pressure(89) == .warning)
         #expect(pressure(90) == .critical)
+        #expect(pressure(110) == .critical)  // overcommit: used > total is safe
     }
 }
