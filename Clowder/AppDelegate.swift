@@ -5,11 +5,13 @@ import ClowderKit
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private(set) var environment: AppEnvironment!
     private(set) var statusController: StatusItemController!
+    private var promotedController: PromotedItemsController!
     private var sleepObservers: [Any] = []
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         environment = AppEnvironment()
         statusController = StatusItemController(environment: environment)
+        promotedController = PromotedItemsController(environment: environment)
         environment.store.start(interval: environment.config.general.pollInterval)
 
         // Pause polling while the machine sleeps.
