@@ -29,12 +29,22 @@ public final class ConfigStore {
             withMutation(keyPath: \.general) {
                 _general = newValue
                 _general.pollInterval = min(max(_general.pollInterval, 1), 10)
+                save()
             }
-            save()
         }
     }
 
-    private var modules: [String: ModuleConfig]
+    @ObservationIgnored private var _modules: [String: ModuleConfig]
+    private var modules: [String: ModuleConfig] {
+        get { access(keyPath: \.modules); return _modules }
+        set {
+            withMutation(keyPath: \.modules) {
+                _modules = newValue
+                save()
+            }
+        }
+    }
+
     @ObservationIgnored private let defaults: UserDefaults
 
     public init(defaults: UserDefaults = .standard) {
@@ -48,7 +58,7 @@ public final class ConfigStore {
         }
         general.pollInterval = min(max(general.pollInterval, 1), 10)
         self._general = general
-        self.modules = modules
+        self._modules = modules
     }
 
     public func config(for id: ModuleID) -> ModuleConfig {
@@ -57,11 +67,10 @@ public final class ConfigStore {
 
     public func setConfig(_ config: ModuleConfig, for id: ModuleID) {
         modules[id.rawValue] = config
-        save()
     }
 
     private func save() {
-        let p = Persisted(general: _general, modules: modules)
+        let p = Persisted(general: _general, modules: _modules)
         defaults.set(try? JSONEncoder().encode(p), forKey: Self.key)
     }
 }
