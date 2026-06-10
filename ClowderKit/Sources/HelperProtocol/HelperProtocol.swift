@@ -5,6 +5,7 @@ public enum HelperConstants {
     public static let daemonPlistName = "dev.clowder.ClowderHelper.plist"
     /// Bumped on any protocol change; mismatch makes the app re-register the helper.
     public static let version = 1
+    /// For local validation only — ClosedRange is not XPC-encodable; never pass it over the wire.
     public static let chargeLimitRange: ClosedRange<Int> = 50...100
     /// Heartbeat cadence (app side); the watchdog timeout is 3 missed beats.
     public static let heartbeatInterval: TimeInterval = 30

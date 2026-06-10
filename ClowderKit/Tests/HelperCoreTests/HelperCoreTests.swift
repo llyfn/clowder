@@ -35,6 +35,7 @@ struct WatchdogTests {
         let t0 = Date(timeIntervalSinceReferenceDate: 0)
         #expect(WatchdogLogic.shouldRestoreFans(lastHeartbeat: t0, now: t0 + 91, fansManual: true))
         #expect(!WatchdogLogic.shouldRestoreFans(lastHeartbeat: t0, now: t0 + 89, fansManual: true))
+        #expect(!WatchdogLogic.shouldRestoreFans(lastHeartbeat: t0, now: t0 + 90, fansManual: true))  // boundary: strictly greater fires
         #expect(!WatchdogLogic.shouldRestoreFans(lastHeartbeat: t0, now: t0 + 9_999, fansManual: false))
     }
 }
