@@ -6,6 +6,7 @@ import Foundation
 final class AppEnvironment {
     let config: ConfigStore
     let store: SensorStore
+    let helper: HelperClient
     let keepAwake: KeepAwakeModule
     let cpu: CPUModule
     let temps: TempsModule
@@ -18,6 +19,7 @@ final class AppEnvironment {
 
     init() {
         config = ConfigStore()
+        helper = HelperClient()
         let tempsFans: any TempsFansProviding = (try? SMCClient()).map { TempsFansSource(smc: $0) }
             ?? UnavailableTempsFans()
         store = SensorStore(sources: SensorSuite(
