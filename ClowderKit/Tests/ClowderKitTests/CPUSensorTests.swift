@@ -41,4 +41,23 @@ struct CPUSensorTests {
         #expect(calc.update(with: [CoreTicks(user: 1, system: 0, idle: 0, nice: 0),
                                    CoreTicks(user: 1, system: 0, idle: 0, nice: 0)]) == nil)
     }
+
+    @Test func niceTicksCountAsBusy() {
+        var calc = CPULoadCalculator()
+        _ = calc.update(with: [CoreTicks(user: 0, system: 0, idle: 0, nice: 0)])
+        // +0 user, +0 system, +100 idle, +100 nice => 100 busy, 100 idle => 50% load
+        let stats = calc.update(with: [CoreTicks(user: 0, system: 0, idle: 100, nice: 100)])
+        #expect(stats != nil)
+        #expect(abs(stats!.perCore[0] - 0.5) < 0.0001)
+    }
+
+    @Test func zeroDeltaYieldsZeroLoad() {
+        var calc = CPULoadCalculator()
+        _ = calc.update(with: [CoreTicks(user: 10, system: 10, idle: 80, nice: 0)])
+        // Same CoreTicks twice => 0 delta => 0% load
+        let stats = calc.update(with: [CoreTicks(user: 10, system: 10, idle: 80, nice: 0)])
+        #expect(stats != nil)
+        #expect(stats!.perCore[0] == 0.0)
+        #expect(stats!.totalLoad == 0.0)
+    }
 }

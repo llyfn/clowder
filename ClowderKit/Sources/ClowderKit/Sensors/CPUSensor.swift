@@ -35,6 +35,7 @@ public struct CPULoadCalculator: Sendable {
             let total = busy + idle
             perCore.append(total == 0 ? 0 : Double(busy) / Double(total))
         }
+        guard !perCore.isEmpty else { return nil }
         let avg = perCore.reduce(0, +) / Double(perCore.count)
         return CPUStats(totalLoad: avg, perCore: perCore)
     }
@@ -55,7 +56,7 @@ public struct DarwinCPUSource: CPUSource {
         defer {
             vm_deallocate(mach_task_self_,
                           vm_address_t(bitPattern: info),
-                          vm_size_t(infoCount) * vm_size_t(MemoryLayout<integer_t>.size))
+                          vm_size_t(infoCount) * vm_size_t(MemoryLayout<natural_t>.size))
         }
         let stride = Int(CPU_STATE_MAX)
         return (0..<Int(cpuCount)).map { core in
