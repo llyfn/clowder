@@ -15,7 +15,10 @@ public struct FanCurve: Codable, Equatable, Sendable {
     public var points: [CurvePoint]
 
     public init(points: [CurvePoint]) {
-        self.points = points.sorted { $0.celsius < $1.celsius }
+        // Duplicate temperatures would create unreachable segments; keep the last point per temperature.
+        var byCelsius: [Double: CurvePoint] = [:]
+        for point in points { byCelsius[point.celsius] = point }
+        self.points = byCelsius.values.sorted { $0.celsius < $1.celsius }
     }
 
     public func rpm(at celsius: Double) -> Double {

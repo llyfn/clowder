@@ -89,6 +89,9 @@ public final class ConfigStore {
             power = p.power ?? PowerConfig()
         }
         general.pollInterval = min(max(general.pollInterval, 1), 10)
+        power.chargeLimitPercent = min(max(power.chargeLimitPercent,
+                                           HelperConstants.chargeLimitRange.lowerBound),
+                                       HelperConstants.chargeLimitRange.upperBound)
         self._general = general
         self._modules = modules
         self._power = power
