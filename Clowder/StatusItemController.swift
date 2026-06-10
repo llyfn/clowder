@@ -1,20 +1,108 @@
 import AppKit
 import ClowderKit
+import SwiftUI
 
-/// Owns the main status item. Animation and the panel arrive in the next task;
-/// this version proves the app launches and puts a frame in the bar.
 @MainActor
-final class StatusItemController {
+final class StatusItemController: NSObject {
     private let environment: AppEnvironment
     private let statusItem: NSStatusItem
+    private let popover = NSPopover()
+
+    private var frames: [NSImage] = []
+    private var sequencer = FrameSequencer(frameCount: CharacterRenderer.frameCount)
+    private var animationTimer: Timer?
+    private var observationTask: Task<Void, Never>?
 
     init(environment: AppEnvironment) {
         self.environment = environment
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        statusItem.button?.image = CharacterRenderer.frames(for: environment.config.general.character).first
+        super.init()
+
+        loadCharacter(environment.config.general.character)
+        if let button = statusItem.button {
+            button.action = #selector(handleClick)
+            button.target = self
+            button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+        }
+        popover.behavior = .transient
+        popover.contentViewController = NSHostingController(
+            rootView: PanelView(environment: environment))
+
+        // Re-tune animation speed and refresh modules whenever a snapshot lands.
+        observationTask = Task { [weak self] in
+            while let self, !Task.isCancelled {
+                await self.observeSnapshotOnce()
+            }
+        }
+    }
+
+    private func observeSnapshotOnce() async {
+        await withCheckedContinuation { continuation in
+            withObservationTracking {
+                _ = environment.store.snapshot.date
+            } onChange: {
+                Task { @MainActor in continuation.resume() }
+            }
+        }
+        environment.refreshModules()
+        retimeAnimation()
     }
 
     func loadCharacter(_ character: RunnerCharacter) {
-        statusItem.button?.image = CharacterRenderer.frames(for: character).first
+        frames = CharacterRenderer.frames(for: character)
+        sequencer = FrameSequencer(frameCount: frames.count)
+        statusItem.button?.image = frames.first
+        retimeAnimation()
+    }
+
+    private func retimeAnimation() {
+        let load = environment.store.snapshot.cpu?.totalLoad ?? 0
+        let interval = FrameSequencer.interval(forLoad: load)
+        guard abs((animationTimer?.timeInterval ?? 0) - interval) > 0.01 else { return }
+        animationTimer?.invalidate()
+        let t = Timer(timeInterval: interval, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.advanceFrame() }
+        }
+        RunLoop.main.add(t, forMode: .common)
+        animationTimer = t
+    }
+
+    private func advanceFrame() {
+        sequencer.advance()
+        statusItem.button?.image = frames[sequencer.index]
+    }
+
+    @objc private func handleClick() {
+        if NSApp.currentEvent?.type == .rightMouseUp {
+            showMenu()
+        } else if popover.isShown {
+            popover.performClose(nil)
+        } else if let button = statusItem.button {
+            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            popover.contentViewController?.view.window?.makeKey()
+        }
+    }
+
+    private func showMenu() {
+        let menu = NSMenu()
+        let awakeOn = environment.keepAwake.engine.state != .off
+        menu.addItem(withTitle: awakeOn ? "Turn Keep Awake Off" : "Keep Awake",
+                     action: #selector(toggleKeepAwake), keyEquivalent: "").target = self
+        menu.addItem(.separator())
+        menu.addItem(withTitle: "Settings…", action: #selector(openSettings), keyEquivalent: ",").target = self
+        menu.addItem(withTitle: "Quit Clowder", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        statusItem.menu = menu
+        statusItem.button?.performClick(nil)
+        statusItem.menu = nil   // detach so left-click keeps opening the popover
+    }
+
+    @objc private func toggleKeepAwake() {
+        let engine = environment.keepAwake.engine
+        engine.state == .off ? engine.enable(for: nil) : engine.disable()
+    }
+
+    @objc private func openSettings() {
+        NSApp.activate()
+        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
     }
 }
