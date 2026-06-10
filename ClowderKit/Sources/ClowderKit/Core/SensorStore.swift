@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 
+/// Sendable because every member protocol (CPUSource, MemorySource, etc.) requires Sendable conformers.
 public struct SensorSuite: Sendable {
     public var cpu: any CPUSource
     public var memory: any MemorySource
@@ -23,17 +24,27 @@ public final class SensorStore {
     @ObservationIgnored private let sources: SensorSuite
     @ObservationIgnored private var cpuCalc = CPULoadCalculator()
     @ObservationIgnored private var netCalc = NetworkRateCalculator()
-    @ObservationIgnored private var timer: Timer?
+    // nonisolated(unsafe) lets deinit (which is nonisolated in Swift 6) reach the timer.
+    // All writes happen on MainActor; deinit is the sole non-isolated reader.
+    @ObservationIgnored nonisolated(unsafe) private var timer: Timer?
 
     public init(sources: SensorSuite) {
         self.sources = sources
+    }
+
+    // deinit is nonisolated in Swift 6, so we cannot call the isolated stop().
+    // Directly invalidating the timer is sufficient — the store lives for the app's
+    // lifetime in production; this guard covers test/teardown scenarios.
+    deinit {
+        timer?.invalidate()
     }
 
     /// Starts (or restarts) the repeating poll at `interval` seconds.
     public func start(interval: TimeInterval) {
         timer?.invalidate()
         let t = Timer(timeInterval: interval, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.tick() }
+            // Timer fires on RunLoop.main so we are already on the main thread; skip the async hop.
+            MainActor.assumeIsolated { self?.tick() }
         }
         t.tolerance = interval * 0.1
         RunLoop.main.add(t, forMode: .common)

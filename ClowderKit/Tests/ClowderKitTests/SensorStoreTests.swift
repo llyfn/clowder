@@ -2,9 +2,12 @@ import Testing
 import Foundation
 @testable import ClowderKit
 
-private struct FakeCPU: CPUSource {
+// Deterministic: user ticks increment by 1_000 per call, so load is always computable.
+private final class FakeCPU: CPUSource, @unchecked Sendable {
+    private var counter: UInt64 = 0
     func sampleTicks() throws -> [CoreTicks] {
-        [CoreTicks(user: UInt64.random(in: 0...1_000_000), system: 0, idle: 1, nice: 0)]
+        counter += 1_000
+        return [CoreTicks(user: counter, system: 0, idle: 1, nice: 0)]
     }
 }
 private struct FailingCPU: CPUSource {
