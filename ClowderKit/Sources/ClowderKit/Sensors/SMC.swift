@@ -101,7 +101,9 @@ struct SMCParamStruct {
 
 public final class SMCClient: SMCConnecting, @unchecked Sendable {
     private enum Selector: UInt8 {
-        case readKey = 5, writeKey = 6, keyAtIndex = 8, keyInfo = 9
+        case readKey = 5
+        // writeKey = 6 — reserved; write path arrives via the privileged helper
+        case keyAtIndex = 8, keyInfo = 9
     }
 
     private let connection: io_connect_t

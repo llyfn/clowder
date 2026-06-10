@@ -9,11 +9,12 @@ public protocol TempsFansProviding: Sendable {
 /// reads the discovered keys (plus fan keys) on each sample.
 public final class TempsFansSource: TempsFansProviding, @unchecked Sendable {
     private let smc: any SMCConnecting
-    private var tempKeys: [SMCKey] = []
+    /// Discovered temp keys and their cached key-info — populated once at init, never mutated.
+    private let tempEntries: [(key: SMCKey, info: SMCKeyInfo)]
 
     public init(smc: any SMCConnecting) {
         self.smc = smc
-        discoverTempKeys()
+        self.tempEntries = Self.discover(smc: smc)
     }
 
     /// CPU die sensors on Apple Silicon.
@@ -26,24 +27,33 @@ public final class TempsFansSource: TempsFansProviding, @unchecked Sendable {
 
     private static let tempPrefixes = ["Tp", "Tg", "Te", "Th"]
 
-    private func discoverTempKeys() {
-        guard let count = try? smc.keyCount() else { return }
+    /// Enumerates the full SMC key table once and returns the subset of keys that
+    /// pass the CPU-temp filter, together with their cached SMCKeyInfo.
+    private static func discover(smc: any SMCConnecting) -> [(key: SMCKey, info: SMCKeyInfo)] {
+        guard let count = try? smc.keyCount() else { return [] }
+        var entries: [(key: SMCKey, info: SMCKeyInfo)] = []
         for index in 0..<count {
             guard let key = try? smc.key(atIndex: index),
                   Self.tempPrefixes.contains(where: { key.string.hasPrefix($0) }),
-                  let value = smc.readValue(key),
+                  let info = try? smc.keyInfo(key), info.dataSize > 0,
+                  let bytes = try? smc.readBytes(key, info: info),
+                  let value = SMCValueDecoder.decode(type: info.dataType, bytes: bytes),
                   Self.isCPUTempKey(key.string, celsius: value) else { continue }
-            tempKeys.append(key)
+            entries.append((key: key, info: info))
         }
+        return entries
     }
 
     public func sampleTemps() -> [TempReading] {
-        tempKeys.compactMap { key in
-            guard let v = smc.readValue(key), Self.isCPUTempKey(key.string, celsius: v) else { return nil }
-            return TempReading(id: key.string, celsius: v)
+        tempEntries.compactMap { entry in
+            guard let bytes = try? smc.readBytes(entry.key, info: entry.info),
+                  let v = SMCValueDecoder.decode(type: entry.info.dataType, bytes: bytes),
+                  Self.isCPUTempKey(entry.key.string, celsius: v) else { return nil }
+            return TempReading(id: entry.key.string, celsius: v)
         }
     }
 
+    /// Fans are ≤ ~10 keys and do not benefit meaningfully from caching; readValue is used directly.
     public func sampleFans() -> [FanReading] {
         guard let count = smc.readValue(SMCKey("FNum")), count > 0 else { return [] }
         return (0..<Int(count)).compactMap { i in
