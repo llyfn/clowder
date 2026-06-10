@@ -34,7 +34,7 @@ public final class ConfigStore {
         }
     }
 
-    @ObservationIgnored private var modules: [String: ModuleConfig]
+    private var modules: [String: ModuleConfig]
     @ObservationIgnored private let defaults: UserDefaults
 
     public init(defaults: UserDefaults = .standard) {
