@@ -9,6 +9,7 @@ final class HelperClient: PowerControlling {
     private(set) var availability: PowerAvailability = .notRegistered
 
     @ObservationIgnored private var connection: NSXPCConnection?
+    @ObservationIgnored private var didAttemptReinstall = false
     // nonisolated(unsafe): written on MainActor only; deinit is the sole non-isolated reader.
     @ObservationIgnored nonisolated(unsafe) private var heartbeatTimer: Timer?
 
@@ -51,8 +52,14 @@ final class HelperClient: PowerControlling {
         conn.remoteObjectInterface = NSXPCInterface(with: ClowderHelperProtocol.self)
         conn.invalidationHandler = { [weak self] in
             Task { @MainActor in
+                self?.stopHeartbeat()
                 self?.availability = .unavailable("helper connection invalidated")
             }
+        }
+        // launchd interrupts (not invalidates) the connection if the helper dies;
+        // the service relaunches on demand, so re-run the handshake.
+        conn.interruptionHandler = { [weak self] in
+            Task { @MainActor in self?.establishConnection() }
         }
         conn.resume()
         connection = conn
@@ -69,10 +76,16 @@ final class HelperClient: PowerControlling {
                 guard let self else { return }
                 if version == HelperConstants.version {
                     self.availability = .ready
+                    self.didAttemptReinstall = false
                     self.startHeartbeat()
+                } else if self.didAttemptReinstall {
+                    // One reinstall attempt only — never loop against a stale binary.
+                    self.availability = .unavailable(
+                        "helper version \(version) ≠ app \(HelperConstants.version) after reinstall")
                 } else {
                     self.availability = .unavailable(
                         "helper version \(version) ≠ app \(HelperConstants.version) — re-registering")
+                    self.didAttemptReinstall = true
                     self.reinstall()
                 }
             }
@@ -92,6 +105,11 @@ final class HelperClient: PowerControlling {
         }
         RunLoop.main.add(t, forMode: .common)
         heartbeatTimer = t
+    }
+
+    private func stopHeartbeat() {
+        heartbeatTimer?.invalidate()
+        heartbeatTimer = nil
     }
 
     private func proxy() -> ClowderHelperProtocol? {
