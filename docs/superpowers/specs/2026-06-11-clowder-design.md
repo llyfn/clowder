@@ -5,7 +5,7 @@
 
 ## Overview
 
-Clowder is an open-source macOS menu bar app that natively reimplements the most popular Mac utility-app features in one place: an animated CPU runner (RunCat), keep-awake (Amphetamine), temperature monitoring and fan control (TG Pro), battery charge limiting (AlDente), and system stats (network/memory/disk, iStat Menus). One app, one icon, a Liquid Glass UI.
+Clowder is an open-source macOS menu bar app that natively implements the most popular Mac utility features in one place: an animated CPU runner, keep-awake, temperature monitoring and fan control, battery charge limiting, and system stats (network/memory/disk). One app, one icon, a Liquid Glass UI.
 
 - **Platform:** macOS 26 (Tahoe)+ only, Apple Silicon write-features (see Safety). SwiftUI with native Liquid Glass APIs.
 - **License:** GPL-3.0 (LICENSE already in repo).
@@ -24,7 +24,7 @@ Clowder is an open-source macOS menu bar app that natively reimplements the most
 | Memory | Usage + pressure | none |
 | Disk | Free/used space | none |
 
-**Non-goals for v1:** Intel SMC write support (battery/fan control hidden on Intel), clipboard history, menu-bar icon hiding (Bartender), plugin loading, Mac App Store, UI test automation.
+**Non-goals for v1:** Intel SMC write support (battery/fan control hidden on Intel), clipboard history, menu-bar icon hiding, plugin loading, Mac App Store, UI test automation.
 
 ## Architecture
 
