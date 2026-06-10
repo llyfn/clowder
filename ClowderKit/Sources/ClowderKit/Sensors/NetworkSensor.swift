@@ -23,7 +23,8 @@ public struct NetworkRateCalculator: Sendable {
         guard let prev = previous else { return nil }
         let elapsed = counters.date.timeIntervalSince(prev.date)
         guard elapsed > 0 else { return nil }
-        // Aggregate counters can go backwards (interface reset); clamp instead of wrapping.
+        // Aggregate counters can go backwards (interface reset, or a per-interface
+        // 32-bit ifi_ibytes wrap); clamp to 0 for that tick instead of wrapping.
         let down = counters.inBytes >= prev.inBytes ? counters.inBytes - prev.inBytes : 0
         let up = counters.outBytes >= prev.outBytes ? counters.outBytes - prev.outBytes : 0
         return NetworkRates(downBytesPerSec: Double(down) / elapsed,
@@ -31,6 +32,9 @@ public struct NetworkRateCalculator: Sendable {
     }
 }
 
+// TODO: getifaddrs exposes only 32-bit if_data counters, which wrap every ~4 GB
+// per interface (a one-tick 0-rate glitch on very fast links). Migrate to
+// sysctl NET_RT_IFLIST2 (if_msghdr2 carries if_data64) before 1.0.
 public struct GetifaddrsNetworkSource: NetworkSource {
     public init() {}
 

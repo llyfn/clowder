@@ -33,4 +33,10 @@ struct NetworkSensorTests {
         _ = calc.update(with: NetworkCounters(inBytes: 0, outBytes: 0, date: t0))
         #expect(calc.update(with: NetworkCounters(inBytes: 5, outBytes: 5, date: t0)) == nil)
     }
+
+    @Test func liveSourceReturnsPositiveCounters() throws {
+        // Smoke test: any real machine has received bytes since boot.
+        let counters = try GetifaddrsNetworkSource().sampleCounters()
+        #expect(counters.inBytes > 0)
+    }
 }
