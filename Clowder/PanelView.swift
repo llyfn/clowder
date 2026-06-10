@@ -8,14 +8,18 @@ struct PanelView: View {
     // those objects directly. Holds only as long as modules are mutated, not replaced.
     let environment: AppEnvironment
 
+    @State private var expanded: ModuleID?
+
     private let columns = [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)]
 
     var body: some View {
         GlassEffectContainer {
             VStack(spacing: 10) {
                 LazyVGrid(columns: columns, spacing: 10) {
-                    tile(environment.cpu.tileView)
-                    tile(environment.temps.tileView)
+                    expandableTile(.cpu, collapsed: environment.cpu.tileView,
+                                   expanded: AnyView(CPUExpandedView(module: environment.cpu)))
+                    expandableTile(.temps, collapsed: environment.temps.tileView,
+                                   expanded: AnyView(TempsExpandedView(module: environment.temps)))
                     tile(environment.memory.tileView)
                     tile(networkDiskTile)
                 }
@@ -43,6 +47,16 @@ struct PanelView: View {
     private func tile(_ content: AnyView) -> some View {
         content
             .glassEffect(.regular, in: .rect(cornerRadius: 14))
+    }
+
+    private func expandableTile(_ id: ModuleID, collapsed: AnyView, expanded expandedView: AnyView) -> some View {
+        Group {
+            if expanded == id { expandedView } else { collapsed }
+        }
+        .glassEffect(.regular, in: .rect(cornerRadius: 14))
+        .onTapGesture {
+            withAnimation(.snappy) { expanded = expanded == id ? nil : id }
+        }
     }
 
     private var footer: some View {
