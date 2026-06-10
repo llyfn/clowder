@@ -6,7 +6,14 @@ import Foundation
 private final class FakeAsserter: PowerAsserting {
     var active: UInt32?
     var nextID: UInt32 = 7
-    func create(reason: String) -> UInt32? { active = nextID; return nextID }
+    var createCallCount: Int = 0
+    func create(reason: String) -> UInt32? {
+        let id = nextID
+        nextID += 1
+        createCallCount += 1
+        active = id
+        return id
+    }
     func release(_ id: UInt32) { if active == id { active = nil } }
 }
 
@@ -32,11 +39,11 @@ struct KeepAwakeTests {
         #expect(engine.state == .on(until: Date(timeIntervalSinceReferenceDate: 900)))
         now = Date(timeIntervalSinceReferenceDate: 899)
         engine.tick()
-        #expect(asserter.active != nil)
-        now = Date(timeIntervalSinceReferenceDate: 901)
+        #expect(asserter.active != nil)            // still on at t=899
+        now = Date(timeIntervalSinceReferenceDate: 900)
         engine.tick()
         #expect(engine.state == .off)
-        #expect(asserter.active == nil)            // assertion released
+        #expect(asserter.active == nil)            // assertion released at exact boundary
     }
 
     @Test func disableReleases() {
@@ -57,5 +64,6 @@ struct KeepAwakeTests {
         now = Date(timeIntervalSinceReferenceDate: 100)
         engine.tick()
         #expect(engine.state == .on(until: Date(timeIntervalSinceReferenceDate: 3600)))
+        #expect(asserter.createCallCount == 2)
     }
 }

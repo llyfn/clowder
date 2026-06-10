@@ -9,13 +9,15 @@ public protocol PowerAsserting {
     func release(_ id: UInt32)
 }
 
+@MainActor
 public final class IOPMPowerAsserter: PowerAsserting {
     public init() {}
 
     public func create(reason: String) -> UInt32? {
         var id: IOPMAssertionID = 0
+        // Prevents both display and idle system sleep — "keep awake" means the screen stays on.
         let rc = IOPMAssertionCreateWithName(
-            kIOPMAssertionTypePreventUserIdleSystemSleep as CFString,
+            kIOPMAssertionTypePreventUserIdleDisplaySleep as CFString,
             IOPMAssertionLevel(kIOPMAssertionLevelOn),
             reason as CFString, &id)
         return rc == kIOReturnSuccess ? id : nil
@@ -46,7 +48,10 @@ public final class KeepAwakeEngine {
 
     public func enable(for duration: TimeInterval?) {
         releaseAssertion()
-        guard let id = asserter.create(reason: "Clowder keep-awake") else { return }
+        guard let id = asserter.create(reason: "Clowder keep-awake") else {
+            state = .off
+            return
+        }
         assertionID = id
         state = .on(until: duration.map { now().addingTimeInterval($0) })
     }
@@ -58,7 +63,7 @@ public final class KeepAwakeEngine {
 
     /// Called from the poll loop; expires a timed assertion.
     public func tick() {
-        if case .on(let until?) = state, now() > until { disable() }
+        if case .on(let until?) = state, now() >= until { disable() }
     }
 
     public var remaining: TimeInterval? {
@@ -99,7 +104,7 @@ struct KeepAwakeTile: View {
 
     var body: some View {
         HStack {
-            Label("Keep awake", systemImage: "cup.and.saucer.fill")
+            Label("Keep awake", systemImage: module.engine.state == .off ? "cup.and.saucer" : "cup.and.saucer.fill")
             if let remaining = module.engine.remaining {
                 Text(Duration.seconds(remaining).formatted(.time(pattern: .hourMinute)))
                     .foregroundStyle(.secondary).font(.caption)
