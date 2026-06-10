@@ -34,6 +34,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    func applicationWillTerminate(_ notification: Notification) {
+        // Release the power assertion deliberately rather than relying on
+        // kernel reclamation when the task dies.
+        environment.keepAwake.engine.disable()
+    }
+
+    // Note (applies to all withObservationTracking loops in this app): onChange is
+    // one-shot, so a mutation landing between firing and re-registration is missed
+    // until the next mutation. Poll ticks and config edits are seconds apart, so
+    // the gap is acceptable by design.
     private func observeGeneralConfigOnce() async {
         await withCheckedContinuation { continuation in
             withObservationTracking {
