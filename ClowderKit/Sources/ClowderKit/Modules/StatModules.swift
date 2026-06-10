@@ -34,7 +34,7 @@ public final class TempsModule: Module {
 
     public var headline: String { temps.map(\.celsius).max().map(Format.temp) ?? "—" }
     public var fanLine: String {
-        fans.isEmpty ? "no fans" : fans.map { "\(Int($0.rpm)) rpm" }.joined(separator: " · ")
+        fans.isEmpty ? "no fans" : fans.map { "\(Int($0.rpm.rounded())) rpm" }.joined(separator: " · ")
     }
     public var tileView: AnyView { AnyView(StatTile(label: "Temp", headline: headline,
                                                     subline: fanLine, icon: "thermometer.medium")) }
