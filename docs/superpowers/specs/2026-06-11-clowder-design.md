@@ -18,13 +18,13 @@ Clowder is an open-source macOS menu bar app that natively reimplements the most
 | CPU runner | Animated character in the bar; speed tracks CPU load | none |
 | Keep-awake | Prevent sleep, with timers (15 m / 1 h / until turned off) | none (power assertion) |
 | Temps | Sensor temperatures, fan RPMs | none (SMC reads) |
-| Fans | Manual fan control with safety floor, auto mode | root helper |
+| Fans | Auto mode, manual RPM, and temperature-based curves, with safety floor | root helper |
 | Battery limit | Cap charging at a threshold (50–100%) | root helper |
 | Network | Up/down throughput | none |
 | Memory | Usage + pressure | none |
 | Disk | Free/used space | none |
 
-**Non-goals for v1:** Intel SMC write support (battery/fan control hidden on Intel), temperature-based fan curves (manual RPM + auto only), additional runner characters, clipboard history, menu-bar icon hiding (Bartender), plugin loading, Mac App Store, UI test automation.
+**Non-goals for v1:** Intel SMC write support (battery/fan control hidden on Intel), clipboard history, menu-bar icon hiding (Bartender), plugin loading, Mac App Store, UI test automation.
 
 ## Architecture
 
@@ -61,7 +61,7 @@ Modules are `@Observable`; tiles, promoted bar items, and the runner animation r
 
 **Writes (control actions):** tile toggles call their module. Keep-awake acts in-process (`IOPMAssertionCreateWithName`). Battery and fan control go `HelperClient` → XPC → ClowderHelper → SMC.
 
-**Persistence:** one `Codable` config per module (enabled, promoted-to-bar, thresholds, fan mode/targets) in `UserDefaults`.
+**Persistence:** one `Codable` config per module (enabled, promoted-to-bar, thresholds, fan mode/targets/curve points, runner character) in `UserDefaults`.
 
 ## Privileged helper & safety
 
@@ -71,6 +71,8 @@ Entire write surface (three operations):
 
 - `setChargeLimit(enabled: Bool, percent: Int)` — Apple Silicon charge-control SMC key (CHWA / CH0B-family by hardware generation), percent clamped to 50–100.
 - `setFanMode(auto | manual(targetRPM per fan))` — RPM clamped to SMC-reported per-fan min/max; targets below the hardware minimum are refused (safety floor).
+
+Fan *curves* are an app-side feature, not a helper one: a curve is a piecewise-linear mapping of 2–5 (temperature, RPM) points against a selected sensor (default: CPU die temperature). In curve mode, the fans module evaluates the curve each poll tick — with ±3 °C hysteresis to prevent oscillation — and sends the result as ordinary `manual` targets over XPC. The helper neither knows nor cares about curves, so every existing safety rule (clamping, floor, heartbeat-loss → auto) applies unchanged.
 - `restoreDefaults()` — fans auto, charging uninhibited.
 
 Safety rules, priority order:
@@ -84,7 +86,7 @@ Safety rules, priority order:
 
 All surfaces use native macOS 26 Liquid Glass.
 
-**Menu bar.** One `NSStatusItem` hosting the animated runner. v1 ships the cat sprite set only (additional characters are a v2 feature); sprites are pre-rendered template images; the animation timer throttles at idle and stops while hidden. Left-click opens the panel; right-click shows a quick menu (keep-awake toggle, Settings, Quit). Any module can be promoted in Settings to its own compact status item (e.g. `48°`, `↓2.1 ↑0.3`).
+**Menu bar.** One `NSStatusItem` hosting the animated runner. Characters are data-driven sprite sets (a named folder of pre-rendered template-image frames); v1 bundles three — cat (default), dog, and rocket — selectable in Settings. The animation timer throttles at idle and stops while hidden. Left-click opens the panel; right-click shows a quick menu (keep-awake toggle, Settings, Quit). Any module can be promoted in Settings to its own compact status item (e.g. `48°`, `↓2.1 ↑0.3`).
 
 **Panel** (validated via mockups): Control Center-style glass tile grid —
 
@@ -93,7 +95,7 @@ All surfaces use native macOS 26 Liquid Glass.
 - Footer: Settings, Quit.
 - Clicking a stat tile expands it in place: per-core CPU bars, full sensor list, per-fan RPM sliders (manual mode only).
 
-**Settings** (SwiftUI `Settings` scene): General (launch at login, poll interval) · Modules (enable, promote to bar) · Power (charge limit, fan mode auto/manual with per-fan RPM) · About (GPL-3.0 notice, Sparkle update check).
+**Settings** (SwiftUI `Settings` scene): General (launch at login, poll interval, runner character picker) · Modules (enable, promote to bar) · Power (charge limit; fan mode auto/manual/curve with per-fan RPM sliders and a point-based curve editor) · About (GPL-3.0 notice, Sparkle update check).
 
 ## Error handling
 
@@ -108,6 +110,7 @@ ClowderKit gets unit tests; sensor sources sit behind protocols so tests inject 
 - Snapshot math: network deltas, CPU% computation.
 - Module state machines: keep-awake timers, charge-limit hysteresis.
 - Clamping and safety rules: fan floor, threshold bounds.
+- Fan curve evaluation: interpolation between points, hysteresis behavior, out-of-range temperatures.
 - XPC protocol encoding/versioning.
 - Helper watchdog: simulated heartbeat drop restores fan auto mode.
 
