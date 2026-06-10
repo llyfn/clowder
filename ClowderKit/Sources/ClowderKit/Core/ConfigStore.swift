@@ -1,4 +1,5 @@
 import Foundation
+import Observation
 
 public struct GeneralConfig: Codable, Equatable, Sendable {
     public var pollInterval: TimeInterval = 2
@@ -12,6 +13,7 @@ public struct ModuleConfig: Codable, Equatable, Sendable {
     public init() {}
 }
 
+@Observable @MainActor
 public final class ConfigStore {
     private static let key = "clowder.config.v1"
 
@@ -20,14 +22,20 @@ public final class ConfigStore {
         var modules: [String: ModuleConfig]
     }
 
+    @ObservationIgnored private var _general: GeneralConfig
     public var general: GeneralConfig {
-        didSet {
-            general.pollInterval = min(max(general.pollInterval, 1), 10)
+        get { access(keyPath: \.general); return _general }
+        set {
+            withMutation(keyPath: \.general) {
+                _general = newValue
+                _general.pollInterval = min(max(_general.pollInterval, 1), 10)
+            }
             save()
         }
     }
-    private var modules: [String: ModuleConfig] { didSet { save() } }
-    private let defaults: UserDefaults
+
+    @ObservationIgnored private var modules: [String: ModuleConfig]
+    @ObservationIgnored private let defaults: UserDefaults
 
     public init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -39,7 +47,7 @@ public final class ConfigStore {
             modules = p.modules
         }
         general.pollInterval = min(max(general.pollInterval, 1), 10)
-        self.general = general
+        self._general = general
         self.modules = modules
     }
 
@@ -49,10 +57,11 @@ public final class ConfigStore {
 
     public func setConfig(_ config: ModuleConfig, for id: ModuleID) {
         modules[id.rawValue] = config
+        save()
     }
 
     private func save() {
-        let p = Persisted(general: general, modules: modules)
+        let p = Persisted(general: _general, modules: modules)
         defaults.set(try? JSONEncoder().encode(p), forKey: Self.key)
     }
 }

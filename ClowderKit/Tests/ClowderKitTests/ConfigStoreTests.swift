@@ -2,6 +2,7 @@ import Testing
 import Foundation
 @testable import ClowderKit
 
+@MainActor
 struct ConfigStoreTests {
     private func freshDefaults() -> UserDefaults {
         UserDefaults(suiteName: "test.\(UUID().uuidString)")!
