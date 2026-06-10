@@ -7,12 +7,31 @@ packages:
   ClowderKit:
     path: ClowderKit
 targets:
+  ClowderHelper:
+    type: tool
+    platform: macOS
+    sources: [ClowderHelper]
+    dependencies:
+      - package: ClowderKit
+        product: SMCCore
+      - package: ClowderKit
+        product: HelperProtocol
+      - package: ClowderKit
+        product: HelperCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.clowder.ClowderHelper
+        PRODUCT_NAME: ClowderHelper
+        SWIFT_VERSION: "6.0"
+        CODE_SIGN_STYLE: Automatic
   Clowder:
     type: application
     platform: macOS
     sources: [Clowder]
     dependencies:
       - package: ClowderKit
+      - target: ClowderHelper
+        embed: false
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.clowder.Clowder
@@ -23,3 +42,16 @@ targets:
         GENERATE_INFOPLIST_FILE: true
         INFOPLIST_KEY_LSUIElement: true
         INFOPLIST_KEY_NSHumanReadableCopyright: "GPL-3.0"
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+    postBuildScripts:
+      - name: Embed helper daemon
+        script: |
+          set -e
+          APP="${BUILT_PRODUCTS_DIR}/${FULL_PRODUCT_NAME}"
+          mkdir -p "${APP}/Contents/Library/LaunchDaemons"
+          cp "${BUILT_PRODUCTS_DIR}/ClowderHelper" "${APP}/Contents/MacOS/ClowderHelper"
+          cp "${SRCROOT}/Clowder/Resources/dev.clowder.ClowderHelper.plist" "${APP}/Contents/Library/LaunchDaemons/"
+          # Re-seal after modifying the bundle (ad-hoc for local builds).
+          # TODO(Plan 3): replace with proper inside-out Developer ID signing.
+          codesign --force --deep -s - "${APP}"
+        basedOnDependencyAnalysis: false
