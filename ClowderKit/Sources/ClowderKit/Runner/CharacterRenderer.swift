@@ -16,9 +16,9 @@ public enum CharacterRenderer {
                 NSColor.black.setFill()
                 NSColor.black.setStroke()
                 switch character {
-                case .cat: drawCat(in: NSZeroRect, phase: phase)
-                case .dog: drawDog(in: NSZeroRect, phase: phase)
-                case .rocket: drawRocket(in: NSZeroRect, phase: phase)
+                case .cat: drawCat(phase: phase)
+                case .dog: drawDog(phase: phase)
+                case .rocket: drawRocket(phase: phase)
                 }
                 return true
             }
@@ -29,7 +29,7 @@ public enum CharacterRenderer {
 
     /// Four legs as angled strokes whose angle oscillates with `phase`,
     /// under a capsule body with a head circle and a tail line.
-    private static func drawCat(in _: NSRect, phase: Double) {
+    private static func drawCat(phase: Double) {
         let body = NSBezierPath(roundedRect: NSRect(x: 4, y: 7, width: 15, height: 6),
                                 xRadius: 3, yRadius: 3)
         body.fill()
@@ -47,7 +47,7 @@ public enum CharacterRenderer {
         drawLegs(phase: phase, bodyMinX: 6, bodyMaxX: 17)
     }
 
-    private static func drawDog(in _: NSRect, phase: Double) {
+    private static func drawDog(phase: Double) {
         let body = NSBezierPath(roundedRect: NSRect(x: 3, y: 7, width: 17, height: 7),
                                 xRadius: 3.5, yRadius: 3.5)
         body.fill()
@@ -56,14 +56,14 @@ public enum CharacterRenderer {
         NSBezierPath(ovalIn: NSRect(x: 19, y: 12, width: 2.5, height: 4)).fill()
         let tail = NSBezierPath()
         tail.move(to: NSPoint(x: 3, y: 12))
-        tail.line(to: NSPoint(x: 0.5, y: 14 + CGFloat(sin(phase))))
+        tail.line(to: NSPoint(x: 1.5, y: 14 + CGFloat(sin(phase))))
         tail.lineWidth = 1.5
         tail.stroke()
         drawLegs(phase: phase, bodyMinX: 5, bodyMaxX: 18)
     }
 
     /// Rocket "runs" by bobbing and pulsing its exhaust flame.
-    private static func drawRocket(in _: NSRect, phase: Double) {
+    private static func drawRocket(phase: Double) {
         let bob = CGFloat(sin(phase)) * 1.5
         let bodyRect = NSRect(x: 8, y: 5 + bob, width: 12, height: 7)
         NSBezierPath(roundedRect: bodyRect, xRadius: 3.5, yRadius: 3.5).fill()

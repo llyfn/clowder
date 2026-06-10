@@ -30,4 +30,12 @@ struct RunnerTests {
             }
         }
     }
+
+    @MainActor
+    @Test func catFramesAreDistinct() {
+        let catFrames = CharacterRenderer.frames(for: .cat)
+        let tiff0 = catFrames[0].tiffRepresentation
+        let tiff1 = catFrames[1].tiffRepresentation
+        #expect(tiff0 != nil && tiff1 != nil && tiff0 != tiff1)
+    }
 }
