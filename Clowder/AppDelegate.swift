@@ -5,6 +5,7 @@ import ClowderKit
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private(set) var environment: AppEnvironment!
     private(set) var statusController: StatusItemController!
+    private var sleepObservers: [Any] = []
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         environment = AppEnvironment()
@@ -14,13 +15,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Pause polling while the machine sleeps.
         let store = environment.store
         let center = NSWorkspace.shared.notificationCenter
-        center.addObserver(forName: NSWorkspace.willSleepNotification, object: nil,
-                           queue: .main) { _ in
+        sleepObservers.append(center.addObserver(
+            forName: NSWorkspace.willSleepNotification, object: nil, queue: .main) { _ in
             Task { @MainActor in store.pause() }
-        }
-        center.addObserver(forName: NSWorkspace.didWakeNotification, object: nil,
-                           queue: .main) { _ in
+        })
+        sleepObservers.append(center.addObserver(
+            forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { _ in
             Task { @MainActor in store.resume() }
-        }
+        })
     }
 }
