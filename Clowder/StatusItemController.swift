@@ -10,8 +10,15 @@ final class StatusItemController: NSObject {
 
     private var frames: [NSImage] = []
     private var sequencer = FrameSequencer(frameCount: CharacterRenderer.frameCount)
-    private var animationTimer: Timer?
+    // nonisolated(unsafe) lets the nonisolated deinit reach the timer; all writes stay on MainActor.
+    nonisolated(unsafe) private var animationTimer: Timer?
     private var observationTask: Task<Void, Never>?
+
+    // The controller lives for the app's lifetime; this guards teardown scenarios.
+    deinit {
+        observationTask?.cancel()
+        animationTimer?.invalidate()
+    }
 
     init(environment: AppEnvironment) {
         self.environment = environment
@@ -68,6 +75,7 @@ final class StatusItemController: NSObject {
     }
 
     private func advanceFrame() {
+        guard !frames.isEmpty else { return }
         sequencer.advance()
         statusItem.button?.image = frames[sequencer.index]
     }
@@ -84,6 +92,7 @@ final class StatusItemController: NSObject {
     }
 
     private func showMenu() {
+        if popover.isShown { popover.performClose(nil) }
         let menu = NSMenu()
         let awakeOn = environment.keepAwake.engine.state != .off
         menu.addItem(withTitle: awakeOn ? "Turn Keep Awake Off" : "Keep Awake",

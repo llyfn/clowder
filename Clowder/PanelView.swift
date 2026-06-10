@@ -3,6 +3,9 @@ import SwiftUI
 
 /// The Control Center-style tile grid.
 struct PanelView: View {
+    // Plain `let` is enough for reactivity: body reads properties of the
+    // @Observable module classes held by the environment, and SwiftUI tracks
+    // those objects directly. Holds only as long as modules are mutated, not replaced.
     let environment: AppEnvironment
 
     private let columns = [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)]
