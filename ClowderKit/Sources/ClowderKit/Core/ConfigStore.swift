@@ -1,5 +1,20 @@
 import Foundation
 import Observation
+import HelperProtocol
+
+public enum FanControlMode: String, Codable, Equatable, Sendable, CaseIterable {
+    case auto, manual, curve
+}
+
+public struct PowerConfig: Codable, Equatable, Sendable {
+    public var chargeLimitEnabled = false
+    public var chargeLimitPercent = 80          // clamped to HelperConstants.chargeLimitRange
+    public var fanMode: FanControlMode = .auto
+    public var manualRPMs: [Int: Double] = [:]  // fan index → target
+    public var curve = FanCurve(points: [CurvePoint(celsius: 50, rpm: 1500),
+                                         CurvePoint(celsius: 90, rpm: 6000)])
+    public init() {}
+}
 
 public struct GeneralConfig: Codable, Equatable, Sendable {
     public var pollInterval: TimeInterval = 2
@@ -20,6 +35,7 @@ public final class ConfigStore {
     private struct Persisted: Codable {
         var general: GeneralConfig
         var modules: [String: ModuleConfig]
+        var power: PowerConfig?
     }
 
     @ObservationIgnored private var _general: GeneralConfig
@@ -45,20 +61,37 @@ public final class ConfigStore {
         }
     }
 
+    @ObservationIgnored private var _power: PowerConfig
+    public var power: PowerConfig {
+        get { access(keyPath: \.power); return _power }
+        set {
+            withMutation(keyPath: \.power) {
+                _power = newValue
+                _power.chargeLimitPercent = min(max(_power.chargeLimitPercent,
+                                                    HelperConstants.chargeLimitRange.lowerBound),
+                                                HelperConstants.chargeLimitRange.upperBound)
+                save()
+            }
+        }
+    }
+
     @ObservationIgnored private let defaults: UserDefaults
 
     public init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         var general = GeneralConfig()
         var modules: [String: ModuleConfig] = [:]
+        var power = PowerConfig()
         if let data = defaults.data(forKey: Self.key),
            let p = try? JSONDecoder().decode(Persisted.self, from: data) {
             general = p.general
             modules = p.modules
+            power = p.power ?? PowerConfig()
         }
         general.pollInterval = min(max(general.pollInterval, 1), 10)
         self._general = general
         self._modules = modules
+        self._power = power
     }
 
     public func config(for id: ModuleID) -> ModuleConfig {
@@ -70,7 +103,7 @@ public final class ConfigStore {
     }
 
     private func save() {
-        let p = Persisted(general: _general, modules: _modules)
+        let p = Persisted(general: _general, modules: _modules, power: _power)
         defaults.set(try? JSONEncoder().encode(p), forKey: Self.key)
     }
 }

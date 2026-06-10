@@ -46,6 +46,46 @@ struct ConfigStoreTests {
         #expect(store.general.pollInterval == 10)
     }
 
+    @Test func powerDefaultsAreSensible() {
+        let (defaults, name) = freshDefaults()
+        defer { UserDefaults().removePersistentDomain(forName: name) }
+        let store = ConfigStore(defaults: defaults)
+        #expect(!store.power.chargeLimitEnabled)
+        #expect(store.power.chargeLimitPercent == 80)
+        #expect(store.power.fanMode == .auto)
+        #expect(store.power.curve.points.count == 2)
+    }
+
+    @Test func powerPersistsAndClampsPercent() {
+        let (defaults, name) = freshDefaults()
+        defer { UserDefaults().removePersistentDomain(forName: name) }
+        let store = ConfigStore(defaults: defaults)
+        var p = store.power
+        p.chargeLimitEnabled = true
+        p.chargeLimitPercent = 30      // below floor → clamps to 50
+        store.power = p
+        #expect(store.power.chargeLimitPercent == 50)
+        p = store.power; p.chargeLimitPercent = 101; store.power = p
+        #expect(store.power.chargeLimitPercent == 100)
+        p = store.power; p.fanMode = .curve; store.power = p
+
+        let reloaded = ConfigStore(defaults: defaults)
+        #expect(reloaded.power.chargeLimitEnabled)
+        #expect(reloaded.power.chargeLimitPercent == 100)
+        #expect(reloaded.power.fanMode == .curve)
+    }
+
+    @Test func oldConfigWithoutPowerStillDecodes() {
+        let (defaults, name) = freshDefaults()
+        defer { UserDefaults().removePersistentDomain(forName: name) }
+        // Simulate a Plan-1-era payload with no "power" key.
+        let legacy = #"{"general":{"pollInterval":5,"character":"dog"},"modules":{}}"#
+        defaults.set(legacy.data(using: .utf8), forKey: "clowder.config.v1")
+        let store = ConfigStore(defaults: defaults)
+        #expect(store.general.pollInterval == 5)          // legacy data kept
+        #expect(store.power.chargeLimitPercent == 80)     // power falls back to defaults
+    }
+
     @Test func observationFiresOnChanges() async {
         let (defaults, name) = freshDefaults()
         defer { UserDefaults().removePersistentDomain(forName: name) }
