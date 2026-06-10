@@ -16,6 +16,7 @@ public struct RootVolumeDiskSource: DiskSource {
               let total = values.volumeTotalCapacity else {
             throw SensorError.readFailed("volume resourceValues")
         }
+        guard free >= 0 else { throw SensorError.readFailed("negative available capacity") }
         return DiskStats(freeBytes: UInt64(free), totalBytes: UInt64(total))
     }
 }

@@ -8,6 +8,8 @@ struct FormatTests {
         #expect(Format.byteRate(340_000) == "340 KB/s")
         #expect(Format.byteRate(2_140_000) == "2.1 MB/s")
         #expect(Format.byteRate(1_280_000_000) == "1.3 GB/s")
+        #expect(Format.byteRate(99_950) == "100 KB/s")       // %.1f round-up boundary
+        #expect(Format.byteRate(999_950) == "1000 KB/s")     // scaled() runs once; matches Activity Monitor
     }
 
     @Test func bytes() {

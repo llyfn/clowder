@@ -11,7 +11,11 @@ public enum Format {
     }
 
     private static func trim(_ v: Double) -> String {
-        v >= 100 || v == v.rounded() ? String(Int(v.rounded())) : String(format: "%.1f", v)
+        let rounded = v.rounded()
+        if v >= 100 || v == rounded { return String(Int(rounded)) }
+        let s = String(format: "%.1f", v)   // C locale: always "." separator
+        // %.1f may round up to a whole number (e.g. 99.95 -> "100.0"); strip the decimal.
+        return s.hasSuffix(".0") ? String(s.dropLast(2)) : s
     }
 
     public static func byteRate(_ bytesPerSec: Double) -> String {
