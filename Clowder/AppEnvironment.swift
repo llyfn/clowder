@@ -7,6 +7,7 @@ final class AppEnvironment {
     let config: ConfigStore
     let store: SensorStore
     let helper: HelperClient
+    let fanControl: FanControlCoordinator
     let battery: BatteryModule
     let keepAwake: KeepAwakeModule
     let cpu: CPUModule
@@ -26,6 +27,7 @@ final class AppEnvironment {
             cpu: DarwinCPUSource(), memory: DarwinMemorySource(),
             network: GetifaddrsNetworkSource(), disk: RootVolumeDiskSource(),
             tempsFans: tempsFans, battery: IOPSBatterySource()))
+        fanControl = FanControlCoordinator(config: config, power: helper)
         battery = BatteryModule(config: config, power: helper)
         keepAwake = KeepAwakeModule(engine: KeepAwakeEngine(asserter: IOPMPowerAsserter()))
         cpu = CPUModule(); temps = TempsModule(); memory = MemoryModule()
@@ -35,6 +37,7 @@ final class AppEnvironment {
     func refreshModules() {
         let snapshot = store.snapshot
         for module in allModules { module.refresh(snapshot) }
+        Task { await fanControl.tick(snapshot) }
     }
 }
 
