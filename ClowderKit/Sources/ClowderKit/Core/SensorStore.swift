@@ -8,11 +8,13 @@ public struct SensorSuite: Sendable {
     public var network: any NetworkSource
     public var disk: any DiskSource
     public var tempsFans: any TempsFansProviding
+    public var battery: any BatterySource
 
     public init(cpu: any CPUSource, memory: any MemorySource, network: any NetworkSource,
-                disk: any DiskSource, tempsFans: any TempsFansProviding) {
+                disk: any DiskSource, tempsFans: any TempsFansProviding,
+                battery: any BatterySource = IOPSBatterySource()) {
         self.cpu = cpu; self.memory = memory; self.network = network
-        self.disk = disk; self.tempsFans = tempsFans
+        self.disk = disk; self.tempsFans = tempsFans; self.battery = battery
     }
 }
 
@@ -68,6 +70,7 @@ public final class SensorStore {
         if let mem = try? sources.memory.sample() { s.memory = MemoryStatsCalculator.stats(from: mem) }
         if let counters = try? sources.network.sampleCounters() { s.network = netCalc.update(with: counters) }
         s.disk = try? sources.disk.sample()
+        s.battery = try? sources.battery.sample()
         s.temps = sources.tempsFans.sampleTemps()
         s.fans = sources.tempsFans.sampleFans()
         snapshot = s

@@ -28,6 +28,7 @@ struct PanelView: View {
                     tile(networkDiskTile)
                 }
                 tile(environment.keepAwake.tileView)   // wide control tile
+                tile(environment.battery.tileView)
                 footer
             }
             .padding(12)

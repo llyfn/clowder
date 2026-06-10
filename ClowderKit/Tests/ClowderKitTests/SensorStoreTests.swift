@@ -30,13 +30,16 @@ private struct FakeTempsFans: TempsFansProviding {
     func sampleTemps() -> [TempReading] { [TempReading(id: "Tp01", celsius: 48)] }
     func sampleFans() -> [FanReading] { [] }
 }
+private struct FakeBattery: BatterySource {
+    func sample() throws -> BatteryStats { BatteryStats(levelPercent: 76, isCharging: true) }
+}
 
 @MainActor
 struct SensorStoreTests {
     private func makeStore(cpu: any CPUSource = FakeCPU()) -> SensorStore {
         SensorStore(sources: SensorSuite(cpu: cpu, memory: FakeMemory(),
                                          network: FakeNetwork(), disk: FakeDisk(),
-                                         tempsFans: FakeTempsFans()))
+                                         tempsFans: FakeTempsFans(), battery: FakeBattery()))
     }
 
     @Test func tickProducesSnapshot() {
@@ -47,6 +50,7 @@ struct SensorStoreTests {
         #expect(store.snapshot.memory?.usedBytes == 3)
         #expect(store.snapshot.disk?.freeBytes == 5)
         #expect(store.snapshot.temps.first?.celsius == 48)
+        #expect(store.snapshot.battery?.levelPercent == 76)
     }
 
     @Test func failingSourceDegradesToNilWithoutCrashing() {

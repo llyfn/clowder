@@ -7,6 +7,7 @@ final class AppEnvironment {
     let config: ConfigStore
     let store: SensorStore
     let helper: HelperClient
+    let battery: BatteryModule
     let keepAwake: KeepAwakeModule
     let cpu: CPUModule
     let temps: TempsModule
@@ -14,8 +15,7 @@ final class AppEnvironment {
     let network: NetworkModule
     let disk: DiskModule
 
-    /// Panel/status-bar ordering. Fans & battery join in a later release.
-    var allModules: [any Module] { [cpu, temps, memory, network, disk, keepAwake] }
+    var allModules: [any Module] { [cpu, temps, memory, network, disk, keepAwake, battery] }
 
     init() {
         config = ConfigStore()
@@ -25,7 +25,8 @@ final class AppEnvironment {
         store = SensorStore(sources: SensorSuite(
             cpu: DarwinCPUSource(), memory: DarwinMemorySource(),
             network: GetifaddrsNetworkSource(), disk: RootVolumeDiskSource(),
-            tempsFans: tempsFans))
+            tempsFans: tempsFans, battery: IOPSBatterySource()))
+        battery = BatteryModule(config: config, power: helper)
         keepAwake = KeepAwakeModule(engine: KeepAwakeEngine(asserter: IOPMPowerAsserter()))
         cpu = CPUModule(); temps = TempsModule(); memory = MemoryModule()
         network = NetworkModule(); disk = DiskModule()

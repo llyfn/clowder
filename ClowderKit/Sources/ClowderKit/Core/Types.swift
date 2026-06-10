@@ -48,6 +48,14 @@ public struct DiskStats: Equatable, Sendable {
     }
 }
 
+public struct BatteryStats: Equatable, Sendable {
+    public var levelPercent: Int
+    public var isCharging: Bool
+    public init(levelPercent: Int, isCharging: Bool) {
+        self.levelPercent = levelPercent; self.isCharging = isCharging
+    }
+}
+
 public struct TempReading: Equatable, Sendable, Identifiable {
     public var id: String          // SMC key, e.g. "Tp01"
     public var celsius: Double
@@ -78,17 +86,20 @@ public struct SensorSnapshot: Sendable {
     public var memory: MemoryStats?
     public var network: NetworkRates?
     public var disk: DiskStats?
+    public var battery: BatteryStats?
     public var temps: [TempReading]
     public var fans: [FanReading]
 
     public init(date: Date = Date(), cpu: CPUStats? = nil, memory: MemoryStats? = nil,
                 network: NetworkRates? = nil, disk: DiskStats? = nil,
+                battery: BatteryStats? = nil,
                 temps: [TempReading] = [], fans: [FanReading] = []) {
         self.date = date
         self.cpu = cpu
         self.memory = memory
         self.network = network
         self.disk = disk
+        self.battery = battery
         self.temps = temps
         self.fans = fans
     }
