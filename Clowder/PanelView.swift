@@ -13,22 +13,34 @@ struct PanelView: View {
     var body: some View {
         GlassEffectContainer {
             VStack(spacing: 10) {
-                HStack(alignment: .top, spacing: 10) {
-                    expandableTile(.cpu, collapsed: environment.cpu.tileView)
-                    expandableTile(.temps, collapsed: environment.temps.tileView)
+                if isEnabled(.cpu) || isEnabled(.temps) {
+                    HStack(alignment: .top, spacing: 10) {
+                        if isEnabled(.cpu) {
+                            expandableTile(.cpu, collapsed: environment.cpu.tileView)
+                        }
+                        if isEnabled(.temps) {
+                            expandableTile(.temps, collapsed: environment.temps.tileView)
+                        }
+                    }
                 }
-                if expanded == .cpu {
+                if expanded == .cpu, isEnabled(.cpu) {
                     detailCard(AnyView(CPUExpandedView(module: environment.cpu)))
                 }
-                if expanded == .temps {
+                if expanded == .temps, isEnabled(.temps) {
                     detailCard(AnyView(TempsExpandedView(module: environment.temps)))
                 }
-                HStack(alignment: .top, spacing: 10) {
-                    tile(environment.memory.tileView)
-                    tile(networkDiskTile)
+                if isEnabled(.memory) || isEnabled(.network) || isEnabled(.disk) {
+                    HStack(alignment: .top, spacing: 10) {
+                        if isEnabled(.memory) { tile(environment.memory.tileView) }
+                        if isEnabled(.network) {
+                            tile(networkDiskTile)
+                        } else if isEnabled(.disk) {
+                            tile(environment.disk.tileView)
+                        }
+                    }
                 }
-                tile(environment.keepAwake.tileView)   // wide control tile
-                tile(environment.battery.tileView)
+                if isEnabled(.keepAwake) { tile(environment.keepAwake.tileView) }
+                if isEnabled(.battery) { tile(environment.battery.tileView) }
                 footer
             }
             .padding(12)
@@ -36,13 +48,21 @@ struct PanelView: View {
         .frame(width: 340)
     }
 
-    /// Network tile carries the disk subline, per the approved panel design.
+    private func isEnabled(_ id: ModuleID) -> Bool {
+        environment.config.config(for: id).enabled
+    }
+
+    /// Network tile carries the disk subline, per the approved panel design —
+    /// unless disk is disabled.
     private var networkDiskTile: AnyView {
-        AnyView(VStack(alignment: .leading, spacing: 2) {
+        let subline = isEnabled(.disk)
+            ? "\(environment.network.upLine) · \(environment.disk.headline)"
+            : environment.network.upLine
+        return AnyView(VStack(alignment: .leading, spacing: 2) {
             Label("NETWORK", systemImage: "network")
                 .font(.caption2).foregroundStyle(.secondary)
             Text(environment.network.downLine).font(.title3.weight(.semibold)).monospacedDigit()
-            Text("\(environment.network.upLine) · \(environment.disk.headline)")
+            Text(subline)
                 .font(.caption).foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
