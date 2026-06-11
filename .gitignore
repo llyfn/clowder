@@ -4,4 +4,5 @@
 .build/
 Clowder.xcodeproj/
 build/
+dist/
 DerivedData/
