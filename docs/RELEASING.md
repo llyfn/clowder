@@ -14,7 +14,7 @@ Versions are stamped from the git tag by CI — `MARKETING_VERSION` in `project.
    shasum -a 256 /tmp/clowder.zip
    ```
    Edit `Casks/clowder.rb`: set `version "X.Y.Z"` and the new `sha256`, then commit and push the tap.
-6. Smoke test: `brew update && brew upgrade --cask clowder` (or fresh `brew install --cask --no-quarantine llyfn/tap/clowder`), launch, check the menu bar item appears.
+6. Smoke test: `brew update && brew upgrade --cask clowder` (or fresh `brew install --cask llyfn/tap/clowder` after `brew trust llyfn/tap`), then `xattr -dr com.apple.quarantine /Applications/Clowder.app`, launch, check the menu bar item appears.
 
 ## Open verification items
 

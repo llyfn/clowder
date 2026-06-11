@@ -26,14 +26,15 @@ A macOS menu bar app that bundles the system utilities you usually install separ
 
 ```sh
 brew tap llyfn/tap https://github.com/llyfn/homebrew-tap
-brew install --cask --no-quarantine clowder
+brew trust llyfn/tap
+brew install --cask clowder
 ```
 
 ### Direct download
 
 Download `Clowder-<version>.zip` from [Releases](https://github.com/llyfn/clowder/releases), unzip, and move `Clowder.app` to `/Applications`.
 
-Clowder is not yet notarized, so macOS quarantines the downloaded app. The `--no-quarantine` flag above handles it for Homebrew installs; for direct downloads run:
+Clowder is not yet notarized, so macOS quarantines the downloaded app. After installing (either way), clear the quarantine flag:
 
 ```sh
 xattr -dr com.apple.quarantine /Applications/Clowder.app
