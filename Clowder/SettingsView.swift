@@ -13,6 +13,8 @@ struct SettingsView: View {
                 .tabItem { Label("Power", systemImage: "bolt.fill") }
             ModulesSettingsTab(environment: environment)
                 .tabItem { Label("Modules", systemImage: "square.grid.2x2") }
+            AboutSettingsTab()
+                .tabItem { Label("About", systemImage: "info.circle") }
         }
         .frame(width: 420)
         .padding(20)
