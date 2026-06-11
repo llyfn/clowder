@@ -1,0 +1,52 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select latest Xcode 26
+        run: sudo xcode-select -s "$(ls -d /Applications/Xcode_26*.app | sort -V | tail -n 1)"
+
+      - name: Install xcodegen
+        run: brew install xcodegen
+
+      - name: Run unit tests
+        run: swift test --package-path ClowderKit
+
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            echo "version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=0.0.0-ci" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build and package
+        run: ./scripts/make-release.sh "${{ steps.version.outputs.version }}"
+
+      - name: Upload artifact (manual runs only)
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: Clowder-${{ steps.version.outputs.version }}
+          path: dist/*.zip
+
+      - name: Create GitHub Release
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        run: >-
+          gh release create "${GITHUB_REF#refs/tags/}" dist/*.zip
+          --title "Clowder ${{ steps.version.outputs.version }}"
+          --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}
