@@ -2,7 +2,8 @@ import AppKit
 import ClowderKit
 import SwiftUI
 
-/// Creates/destroys one extra NSStatusItem per module with `promotedToBar` on.
+/// Creates/destroys one extra NSStatusItem per module that is `enabled`
+/// with `promotedToBar` on.
 @MainActor
 final class PromotedItemsController {
     private let environment: AppEnvironment
@@ -27,7 +28,9 @@ final class PromotedItemsController {
         await withCheckedContinuation { continuation in
             withObservationTracking {
                 for module in environment.allModules {
-                    _ = environment.config.config(for: module.id).promotedToBar
+                    let config = environment.config.config(for: module.id)
+                    _ = config.promotedToBar
+                    _ = config.enabled
                 }
             } onChange: {
                 Task { @MainActor in continuation.resume() }
