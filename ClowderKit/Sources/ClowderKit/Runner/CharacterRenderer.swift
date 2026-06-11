@@ -6,16 +6,23 @@ import Darwin
 /// asset pipeline; swap for nicer paths anytime without touching callers.
 public enum CharacterRenderer {
     public static let frameCount = 6
-    public static let size = NSSize(width: 26, height: 17)
+
+    public static func size(for character: RunnerCharacter) -> NSSize {
+        switch character {
+        case .clowder: NSSize(width: 46, height: 17)
+        case .cat, .dog, .rocket: NSSize(width: 26, height: 17)
+        }
+    }
 
     @MainActor
     public static func frames(for character: RunnerCharacter) -> [NSImage] {
         (0..<frameCount).map { frame in
-            let image = NSImage(size: size, flipped: false) { _ in
+            let image = NSImage(size: size(for: character), flipped: false) { _ in
                 let phase = Double(frame) / Double(frameCount) * 2 * .pi
                 NSColor.black.setFill()
                 NSColor.black.setStroke()
                 switch character {
+                case .clowder: drawClowder(phase: phase)
                 case .cat: drawCat(phase: phase)
                 case .dog: drawDog(phase: phase)
                 case .rocket: drawRocket(phase: phase)
@@ -25,6 +32,14 @@ public enum CharacterRenderer {
             image.isTemplate = true
             return image
         }
+    }
+
+    /// Three cats mid-chase: a kitten trailing, a middle cat, and the leader
+    /// out front — each on its own gait phase so the pack ripples.
+    private static func drawClowder(phase: Double) {
+        drawCat(phase: phase + 4.2, offsetX: 0, scale: 0.62)   // kitten, trailing
+        drawCat(phase: phase + 2.1, offsetX: 12, scale: 0.74)
+        drawCat(phase: phase, offsetX: 25, scale: 0.84)        // leader
     }
 
     /// A chibi cat: oversized head, gallop bounce, lagging head bob, curling

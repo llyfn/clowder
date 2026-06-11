@@ -5,7 +5,7 @@ public enum ModuleID: String, CaseIterable, Codable, Sendable {
 }
 
 public enum RunnerCharacter: String, CaseIterable, Codable, Sendable {
-    case cat, dog, rocket
+    case clowder, cat, dog, rocket
 }
 
 public struct CPUStats: Equatable, Sendable {

@@ -26,7 +26,30 @@ struct RunnerTests {
             #expect(frames.count == CharacterRenderer.frameCount)
             for frame in frames {
                 #expect(frame.isTemplate)
-                #expect(frame.size.height == CharacterRenderer.size.height)
+                #expect(frame.size == CharacterRenderer.size(for: character))
+            }
+        }
+    }
+
+    @MainActor
+    @Test func clowderRendersOnAWiderCanvasThanASingleCat() {
+        #expect(CharacterRenderer.size(for: .clowder).width
+                > CharacterRenderer.size(for: .cat).width)
+        let frames = CharacterRenderer.frames(for: .clowder)
+        #expect(frames.count == CharacterRenderer.frameCount)
+        for frame in frames {
+            #expect(frame.isTemplate)
+            #expect(frame.size == CharacterRenderer.size(for: .clowder))
+        }
+    }
+
+    @MainActor
+    @Test func clowderFramesAreAllDistinct() {
+        let tiffs = CharacterRenderer.frames(for: .clowder).compactMap(\.tiffRepresentation)
+        #expect(tiffs.count == CharacterRenderer.frameCount)
+        for i in tiffs.indices {
+            for j in tiffs.indices where j > i {
+                #expect(tiffs[i] != tiffs[j], "frames \(i) and \(j) are identical")
             }
         }
     }
