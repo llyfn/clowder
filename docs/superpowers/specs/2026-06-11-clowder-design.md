@@ -77,7 +77,7 @@ Fan *curves* are an app-side feature, not a helper one: a curve is a piecewise-l
 
 Safety rules, priority order:
 
-1. Helper restores defaults on its own start and graceful exit.
+1. Helper restores defaults on its own start and graceful exit. The app re-applies the persisted charge limit whenever the helper reports ready (launch, reboot, helper restart), so the user's intent survives restarts.
 2. App heartbeats over XPC every 30 s. Heartbeat loss while fans are manual → helper restores fan auto mode. The charge limit deliberately persists (that is its purpose).
 3. If any in-app temperature read exceeds 95 °C while fans are manual, the app immediately requests auto mode.
 4. Intel Macs: battery/fan write features are disabled with an explanatory tooltip; no Intel SMC write paths in v1.
