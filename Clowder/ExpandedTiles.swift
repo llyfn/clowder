@@ -27,7 +27,8 @@ struct CPUExpandedView: View {
 }
 
 struct TempsExpandedView: View {
-    let module: TempsModule
+    let environment: AppEnvironment
+    private var module: TempsModule { environment.temps }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
@@ -48,6 +49,13 @@ struct TempsExpandedView: View {
                                 Spacer()
                                 Text("\(Int(fan.rpm.rounded())) rpm").font(.caption.monospacedDigit())
                             }
+                        }
+                        // Spec: per-fan sliders live here in manual mode only.
+                        if environment.config.power.fanMode == .manual,
+                           environment.helper.availability == .ready {
+                            Divider()
+                            FanRPMSliders(config: environment.config, fans: module.fans)
+                                .font(.caption)
                         }
                     }
                 }

@@ -27,7 +27,7 @@ struct PanelView: View {
                     detailCard(AnyView(CPUExpandedView(module: environment.cpu)))
                 }
                 if expanded == .temps, isEnabled(.temps) {
-                    detailCard(AnyView(TempsExpandedView(module: environment.temps)))
+                    detailCard(AnyView(TempsExpandedView(environment: environment)))
                 }
                 if isEnabled(.memory) || isEnabled(.network) || isEnabled(.disk) {
                     HStack(alignment: .top, spacing: 10) {
