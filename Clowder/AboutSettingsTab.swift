@@ -18,9 +18,10 @@ struct AboutSettingsTab: View {
             Text("Clowder").font(.title2.bold())
             Text("Version \(version)")
                 .font(.callout).foregroundStyle(.secondary)
-            Text("Free software, licensed under the GNU GPL-3.0.\nNo warranty; see the license for details.")
+            Text("Free software, licensed under the GNU GPL-3.0.")
                 .font(.caption).foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
+            Text("No warranty; see the license for details.")
+                .font(.caption).foregroundStyle(.secondary)
             HStack(spacing: 16) {
                 Link("Source code", destination: Self.repoURL)
                 Link("Check for updates", destination: Self.releasesURL)
