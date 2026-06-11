@@ -12,12 +12,16 @@ final class StatusItemController: NSObject {
     private var sequencer = FrameSequencer(frameCount: CharacterRenderer.frameCount)
     // nonisolated(unsafe) lets the nonisolated deinit reach the timer; all writes stay on MainActor.
     nonisolated(unsafe) private var animationTimer: Timer?
+    nonisolated(unsafe) private var occlusionObserver: (any NSObjectProtocol)?
     private var observationTask: Task<Void, Never>?
 
     // The controller lives for the app's lifetime; this guards teardown scenarios.
     deinit {
         observationTask?.cancel()
         animationTimer?.invalidate()
+        if let occlusionObserver {
+            NotificationCenter.default.removeObserver(occlusionObserver)
+        }
     }
 
     init(environment: AppEnvironment) {
@@ -44,6 +48,16 @@ final class StatusItemController: NSObject {
                 await self.observeSnapshotOnce()
             }
         }
+
+        // The status item's window is occluded when the menu bar is hidden
+        // (full-screen apps, screen lock); stop burning timer wakeups then.
+        if let window = statusItem.button?.window {
+            occlusionObserver = NotificationCenter.default.addObserver(
+                forName: NSWindow.didChangeOcclusionStateNotification,
+                object: window, queue: .main) { [weak self] _ in
+                Task { @MainActor in self?.retimeAnimation() }
+            }
+        }
     }
 
     private func observeSnapshotOnce() async {
@@ -66,9 +80,16 @@ final class StatusItemController: NSObject {
     }
 
     private func retimeAnimation() {
+        let visible = statusItem.button?.window?.occlusionState.contains(.visible) ?? true
+        guard visible else {
+            animationTimer?.invalidate()
+            animationTimer = nil
+            return
+        }
         let load = environment.store.snapshot.cpu?.totalLoad ?? 0
         let interval = FrameSequencer.interval(forLoad: load)
-        guard abs((animationTimer?.timeInterval ?? 0) - interval) > 0.01 else { return }
+        if let timer = animationTimer,
+           abs(timer.timeInterval - interval) <= 0.01 { return }
         animationTimer?.invalidate()
         let t = Timer(timeInterval: interval, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.advanceFrame() }
