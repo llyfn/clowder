@@ -6,7 +6,7 @@ A macOS menu bar app that bundles the system utilities you usually install separ
 
 | Module | What it does |
 |---|---|
-| CPU runner | Animated character in the menu bar; its speed tracks CPU load |
+| CPU runner | A trio of cats runs in the menu bar; their speed tracks CPU load (solo cat, dog, and rocket characters available in Settings) |
 | Keep-awake | Prevent sleep, with timers (15 min / 1 h / until turned off) |
 | Temperatures | Sensor temperatures and fan RPMs |
 | Fan control | Auto mode, fixed RPM, or temperature-based curves — with a safety floor and a 95 °C failsafe |
