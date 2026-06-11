@@ -9,6 +9,8 @@ struct SettingsView: View {
         TabView {
             GeneralSettingsTab(environment: environment)
                 .tabItem { Label("General", systemImage: "gearshape") }
+            PowerSettingsTab(environment: environment)
+                .tabItem { Label("Power", systemImage: "bolt.fill") }
             ModulesSettingsTab(environment: environment)
                 .tabItem { Label("Modules", systemImage: "square.grid.2x2") }
         }
