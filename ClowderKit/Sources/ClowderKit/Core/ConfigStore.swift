@@ -18,7 +18,7 @@ public struct PowerConfig: Codable, Equatable, Sendable {
 
 public struct GeneralConfig: Codable, Equatable, Sendable {
     public var pollInterval: TimeInterval = 2
-    public var character: RunnerCharacter = .cat
+    public var character: RunnerCharacter = .clowder
     public init() {}
 }
 

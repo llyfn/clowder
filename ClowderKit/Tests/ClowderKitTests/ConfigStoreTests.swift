@@ -15,7 +15,7 @@ struct ConfigStoreTests {
         defer { UserDefaults().removePersistentDomain(forName: name) }
         let store = ConfigStore(defaults: defaults)
         #expect(store.general.pollInterval == 2)
-        #expect(store.general.character == .cat)
+        #expect(store.general.character == .clowder)
         #expect(store.config(for: .cpu).enabled)
         #expect(!store.config(for: .cpu).promotedToBar)
     }
@@ -84,6 +84,26 @@ struct ConfigStoreTests {
         let store = ConfigStore(defaults: defaults)
         #expect(store.general.pollInterval == 5)          // legacy data kept
         #expect(store.power.chargeLimitPercent == 80)     // power falls back to defaults
+    }
+
+    /// Product decision: a fresh install shows only the CPU runner in the
+    /// menu bar — no module is promoted by default.
+    @Test func freshInstallPromotesNothingToTheBar() {
+        let (defaults, name) = freshDefaults()
+        defer { UserDefaults().removePersistentDomain(forName: name) }
+        let store = ConfigStore(defaults: defaults)
+        for id in ModuleID.allCases {
+            #expect(!store.config(for: id).promotedToBar, "\(id) must not be promoted by default")
+        }
+    }
+
+    @Test func persistedSingleCatChoiceSurvivesTheClowderDefault() {
+        let (defaults, name) = freshDefaults()
+        defer { UserDefaults().removePersistentDomain(forName: name) }
+        let legacy = #"{"general":{"pollInterval":2,"character":"cat"},"modules":{}}"#
+        defaults.set(legacy.data(using: .utf8), forKey: "clowder.config.v1")
+        let store = ConfigStore(defaults: defaults)
+        #expect(store.general.character == .cat)
     }
 
     @Test func observationFiresOnChanges() async {
