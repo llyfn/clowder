@@ -75,17 +75,7 @@ struct PowerSettingsTab: View {
                 .pickerStyle(.segmented)
 
                 if config.power.fanMode == .manual {
-                    ForEach(environment.store.snapshot.fans) { fan in
-                        LabeledContent("Fan \(fan.id)") {
-                            Slider(value: Binding(
-                                get: { config.power.manualRPMs[fan.id] ?? fan.minRPM },
-                                set: { v in var p = config.power
-                                       p.manualRPMs[fan.id] = v.rounded(); config.power = p }),
-                                in: fan.minRPM...fan.maxRPM)
-                            Text("\(Int(config.power.manualRPMs[fan.id] ?? fan.minRPM)) rpm")
-                                .font(.caption.monospacedDigit()).frame(width: 70)
-                        }
-                    }
+                    FanRPMSliders(config: config, fans: environment.store.snapshot.fans)
                 }
 
                 if config.power.fanMode == .curve {
