@@ -30,6 +30,9 @@ final class StatusItemController: NSObject {
             button.action = #selector(handleClick)
             button.target = self
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+            let bridge = NSHostingView(rootView: SettingsOpenerBridge())
+            bridge.setFrameSize(.zero)
+            button.addSubview(bridge)
         }
         popover.behavior = .transient
         popover.contentViewController = NSHostingController(
@@ -111,7 +114,6 @@ final class StatusItemController: NSObject {
     }
 
     @objc private func openSettings() {
-        NSApp.activate()
-        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        SettingsOpener.shared.open()
     }
 }

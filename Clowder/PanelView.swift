@@ -71,8 +71,10 @@ struct PanelView: View {
 
     private var footer: some View {
         HStack {
-            SettingsLink { Label("Settings", systemImage: "gearshape") }
-                .buttonStyle(.plain)
+            Button { SettingsOpener.shared.open() } label: {
+                Label("Settings", systemImage: "gearshape")
+            }
+            .buttonStyle(.plain)
             Spacer()
             Button { NSApp.terminate(nil) } label: { Label("Quit", systemImage: "power") }
                 .buttonStyle(.plain)
