@@ -107,10 +107,11 @@ private struct CurveEditor: View {
 
     var body: some View {
         ForEach(config.power.curve.points.indices, id: \.self) { i in
+            let point = i < config.power.curve.points.count ? config.power.curve.points[i] : nil
             HStack {
-                Stepper("\(Int(config.power.curve.points[i].celsius)) °C",
+                Stepper(point.map { "\(Int($0.celsius)) °C" } ?? "—",
                         value: bindingFor(i, \.celsius), in: 30...110, step: 5)
-                Stepper("\(Int(config.power.curve.points[i].rpm)) rpm",
+                Stepper(point.map { "\(Int($0.rpm)) rpm" } ?? "—",
                         value: bindingFor(i, \.rpm), in: 1000...7000, step: 250)
                 Button(role: .destructive) { removePoint(i) } label: {
                     Image(systemName: "minus.circle")
@@ -132,10 +133,16 @@ private struct CurveEditor: View {
 
     private func bindingFor(_ index: Int, _ keyPath: WritableKeyPath<CurvePoint, Double>) -> Binding<Double> {
         Binding(
-            get: { config.power.curve.points[index][keyPath: keyPath] },
+            get: {
+                guard index < config.power.curve.points.count else { return 0 }
+                return config.power.curve.points[index][keyPath: keyPath]
+            },
             set: { value in
                 var p = config.power
                 var points = p.curve.points
+                guard index < points.count else { return }
+                let existing = Set(points.indices.filter { $0 != index }.map { Int(points[$0].celsius) })
+                if keyPath == \CurvePoint.celsius, existing.contains(Int(value)) { return }
                 points[index][keyPath: keyPath] = value
                 p.curve = FanCurve(points: points)   // re-sorts by temperature
                 config.power = p
@@ -145,6 +152,7 @@ private struct CurveEditor: View {
     private func removePoint(_ index: Int) {
         var p = config.power
         var points = p.curve.points
+        guard index < points.count else { return }
         points.remove(at: index)
         p.curve = FanCurve(points: points)
         config.power = p
