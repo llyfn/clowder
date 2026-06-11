@@ -27,24 +27,53 @@ public enum CharacterRenderer {
         }
     }
 
-    /// Four legs as angled strokes whose angle oscillates with `phase`,
-    /// under a capsule body with a head circle and a tail line.
-    private static func drawCat(phase: Double) {
-        let body = NSBezierPath(roundedRect: NSRect(x: 4, y: 7, width: 15, height: 6),
-                                xRadius: 3, yRadius: 3)
-        body.fill()
-        NSBezierPath(ovalIn: NSRect(x: 17, y: 9, width: 6, height: 6)).fill()
-        // ears
-        let ear = NSBezierPath()
-        ear.move(to: NSPoint(x: 19, y: 14)); ear.line(to: NSPoint(x: 20, y: 17)); ear.line(to: NSPoint(x: 21, y: 14))
-        ear.fill()
-        // tail swings opposite the legs
+    /// A chibi cat: oversized head, gallop bounce, lagging head bob, curling
+    /// tail, paw-like round line caps. `offsetX`/`scale` let the clowder
+    /// character place several cats on one canvas.
+    private static func drawCat(phase: Double, offsetX: CGFloat = 0, scale: CGFloat = 1) {
+        guard let context = NSGraphicsContext.current?.cgContext else { return }
+        context.saveGState()
+        defer { context.restoreGState() }
+        context.translateBy(x: offsetX, y: 0)
+        context.scaleBy(x: scale, y: scale)
+
+        // Vertical budget on the 17 pt canvas: ear tips peak at
+        // headY(max 8.8) + 8 = 16.8 — keep amplitudes small or ears clip.
+        let bounce = CGFloat(abs(sin(phase))) * 1.2        // body rises mid-stride
+        let headBob = CGFloat(sin(phase + .pi / 3)) * 0.6  // head lags the body
+
+        // Legs first so the body overlaps the hips.
+        drawGallopLegs(phase: phase, bounce: bounce)
+
+        // Body: low rounded capsule.
+        NSBezierPath(roundedRect: NSRect(x: 5, y: 5 + bounce, width: 13, height: 6),
+                     xRadius: 3, yRadius: 3).fill()
+
+        // Head: oversized circle, the main cuteness lever.
+        let headY = 7 + bounce + headBob
+        NSBezierPath(ovalIn: NSRect(x: 15, y: headY, width: 7, height: 7)).fill()
+
+        // Two pointy ears riding the head's upper edge.
+        let ears = NSBezierPath()
+        ears.move(to: NSPoint(x: 16.5, y: headY + 5.8))
+        ears.line(to: NSPoint(x: 17.3, y: headY + 8))
+        ears.line(to: NSPoint(x: 18.6, y: headY + 6.4))
+        ears.close()
+        ears.move(to: NSPoint(x: 19.4, y: headY + 6.4))
+        ears.line(to: NSPoint(x: 20.7, y: headY + 8))
+        ears.line(to: NSPoint(x: 21.3, y: headY + 5.6))
+        ears.close()
+        ears.fill()
+
+        // Tail: curved stroke waving against the stride.
         let tail = NSBezierPath()
-        tail.move(to: NSPoint(x: 4, y: 11))
-        tail.line(to: NSPoint(x: 1, y: 12 + CGFloat(sin(phase)) * 2))
-        tail.lineWidth = 1.5
+        tail.move(to: NSPoint(x: 6, y: 9 + bounce))
+        tail.curve(to: NSPoint(x: 1.5, y: 12.5 + CGFloat(sin(phase)) * 1.8),
+                   controlPoint1: NSPoint(x: 3, y: 9.5 + bounce),
+                   controlPoint2: NSPoint(x: 1.5, y: 10.5))
+        tail.lineWidth = 1.6
+        tail.lineCapStyle = .round
         tail.stroke()
-        drawLegs(phase: phase, bodyMinX: 6, bodyMaxX: 17)
     }
 
     private static func drawDog(phase: Double) {
@@ -59,7 +88,7 @@ public enum CharacterRenderer {
         tail.line(to: NSPoint(x: 1.5, y: 14 + CGFloat(sin(phase))))
         tail.lineWidth = 1.5
         tail.stroke()
-        drawLegs(phase: phase, bodyMinX: 5, bodyMaxX: 18)
+        drawGallopLegs(phase: phase, bounce: 0)
     }
 
     /// Rocket "runs" by bobbing and pulsing its exhaust flame.
@@ -80,16 +109,24 @@ public enum CharacterRenderer {
         flame.fill()
     }
 
-    private static func drawLegs(phase: Double, bodyMinX: CGFloat, bodyMaxX: CGFloat) {
-        for (i, x) in [bodyMinX, bodyMinX + 3.5, bodyMaxX - 3.5, bodyMaxX].enumerated() {
-            // alternating gait: even legs swing with phase, odd legs in counter-phase
-            let legPhase = phase + (i.isMultiple(of: 2) ? 0 : .pi)
-            let swing = CGFloat(sin(legPhase)) * 2.5
-            let leg = NSBezierPath()
-            leg.move(to: NSPoint(x: x, y: 8))
-            leg.line(to: NSPoint(x: x + swing, y: 2))
-            leg.lineWidth = 1.5
-            leg.stroke()
+    /// Gallop: back and front leg pairs swing out of phase; each foot lifts
+    /// during its forward swing. Round caps read as paws at menu bar size.
+    private static func drawGallopLegs(phase: Double, bounce: CGFloat) {
+        let legs: [(hipX: CGFloat, legPhase: Double)] = [
+            (7, phase),                          // back pair
+            (8.5, phase + 0.45),
+            (15, phase + .pi * 0.75),            // front pair
+            (16.5, phase + .pi * 0.75 + 0.45),
+        ]
+        for leg in legs {
+            let swing = CGFloat(sin(leg.legPhase)) * 3
+            let lift = CGFloat(max(0, sin(leg.legPhase + .pi / 2))) * 1.5
+            let path = NSBezierPath()
+            path.move(to: NSPoint(x: leg.hipX, y: 7 + bounce))
+            path.line(to: NSPoint(x: leg.hipX + swing, y: 1.5 + lift))
+            path.lineWidth = 1.6
+            path.lineCapStyle = .round
+            path.stroke()
         }
     }
 }

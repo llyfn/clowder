@@ -32,10 +32,14 @@ struct RunnerTests {
     }
 
     @MainActor
-    @Test func catFramesAreDistinct() {
-        let catFrames = CharacterRenderer.frames(for: .cat)
-        let tiff0 = catFrames[0].tiffRepresentation
-        let tiff1 = catFrames[1].tiffRepresentation
-        #expect(tiff0 != nil && tiff1 != nil && tiff0 != tiff1)
+    @Test func catFramesAreAllDistinct() {
+        let frames = CharacterRenderer.frames(for: .cat)
+        let tiffs = frames.compactMap(\.tiffRepresentation)
+        #expect(tiffs.count == frames.count)
+        for i in tiffs.indices {
+            for j in tiffs.indices where j > i {
+                #expect(tiffs[i] != tiffs[j], "frames \(i) and \(j) are identical")
+            }
+        }
     }
 }
