@@ -46,6 +46,11 @@ struct PanelView: View {
             .padding(12)
         }
         .frame(width: 340)
+        // Clear a stale selection when the expanded module is disabled, so
+        // re-enabling it doesn't auto-expand the card.
+        .onChange(of: expanded.map(isEnabled)) { _, stillEnabled in
+            if stillEnabled == false { expanded = nil }
+        }
     }
 
     private func isEnabled(_ id: ModuleID) -> Bool {
