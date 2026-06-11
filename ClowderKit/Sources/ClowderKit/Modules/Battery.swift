@@ -41,6 +41,15 @@ public final class BatteryModule: Module {
                                           percent: config.power.chargeLimitPercent)
     }
 
+    /// Re-pushes the persisted limit to the helper. Called when the helper becomes
+    /// ready (launch, reboot, helper restart) — the helper clears its state on start,
+    /// so the app owns re-applying the user's persisted intent.
+    @discardableResult
+    public func reconcile() async -> String? {
+        guard config.power.chargeLimitEnabled else { return nil }   // nothing to re-apply
+        return await power.setChargeLimit(enabled: true, percent: config.power.chargeLimitPercent)
+    }
+
     public func requestHelper() {
         power.connect()
     }

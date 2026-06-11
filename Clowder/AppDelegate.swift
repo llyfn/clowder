@@ -8,6 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var promotedController: PromotedItemsController!
     private var sleepObservers: [Any] = []
     private var configObservationTask: Task<Void, Never>?
+    private var helperObservationTask: Task<Void, Never>?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         environment = AppEnvironment()
@@ -32,6 +33,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 await self.observeGeneralConfigOnce()
             }
         }
+
+        helperObservationTask = Task { [weak self] in
+            while let self, !Task.isCancelled {
+                await self.observeHelperAvailabilityOnce()
+            }
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -44,6 +51,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // one-shot, so a mutation landing between firing and re-registration is missed
     // until the next mutation. Poll ticks and config edits are seconds apart, so
     // the gap is acceptable by design.
+    private func observeHelperAvailabilityOnce() async {
+        await withCheckedContinuation { continuation in
+            withObservationTracking {
+                _ = environment.helper.availability
+            } onChange: {
+                Task { @MainActor in continuation.resume() }
+            }
+        }
+        if environment.helper.availability == .ready {
+            Task { await environment.battery.reconcile() }
+        }
+    }
+
     private func observeGeneralConfigOnce() async {
         await withCheckedContinuation { continuation in
             withObservationTracking {

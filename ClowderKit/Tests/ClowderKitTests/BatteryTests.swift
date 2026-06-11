@@ -61,4 +61,19 @@ struct BatteryModuleTests {
         #expect(power.lastChargeCall?.enabled == true)
         #expect(power.lastChargeCall?.percent == 85)
     }
+
+    @Test func reconcileReappliesPersistedLimit() async {
+        let (module, config, power) = makeModule()
+        var p = config.power; p.chargeLimitEnabled = true; p.chargeLimitPercent = 75
+        config.power = p
+        await module.reconcile()
+        #expect(power.lastChargeCall?.enabled == true)
+        #expect(power.lastChargeCall?.percent == 75)
+    }
+
+    @Test func reconcileSkipsWhenDisabled() async {
+        let (module, _, power) = makeModule()
+        await module.reconcile()
+        #expect(power.lastChargeCall == nil)
+    }
 }
