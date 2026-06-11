@@ -17,7 +17,8 @@ public struct IOPSBatterySource: BatterySource {
                     .takeUnretainedValue() as? [String: Any],
                let level = desc[kIOPSCurrentCapacityKey as String] as? Int {
                 let charging = desc[kIOPSIsChargingKey as String] as? Bool ?? false
-                return BatteryStats(levelPercent: level, isCharging: charging)
+                let onAC = (desc[kIOPSPowerSourceStateKey as String] as? String) == kIOPSACPowerValue
+                return BatteryStats(levelPercent: level, isCharging: charging, isOnAC: onAC)
             }
         }
         throw SensorError.unavailable("no battery")

@@ -31,7 +31,7 @@ private struct FakeTempsFans: TempsFansProviding {
     func sampleFans() -> [FanReading] { [] }
 }
 private struct FakeBattery: BatterySource {
-    func sample() throws -> BatteryStats { BatteryStats(levelPercent: 76, isCharging: true) }
+    func sample() throws -> BatteryStats { BatteryStats(levelPercent: 76, isCharging: true, isOnAC: true) }
 }
 
 @MainActor

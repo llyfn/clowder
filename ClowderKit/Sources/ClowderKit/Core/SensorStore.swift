@@ -12,7 +12,7 @@ public struct SensorSuite: Sendable {
 
     public init(cpu: any CPUSource, memory: any MemorySource, network: any NetworkSource,
                 disk: any DiskSource, tempsFans: any TempsFansProviding,
-                battery: any BatterySource = IOPSBatterySource()) {
+                battery: any BatterySource) {
         self.cpu = cpu; self.memory = memory; self.network = network
         self.disk = disk; self.tempsFans = tempsFans; self.battery = battery
     }

@@ -27,15 +27,23 @@ struct BatteryModuleTests {
         let (module, config, _) = makeModule()
         var p = config.power; p.chargeLimitEnabled = true; p.chargeLimitPercent = 80
         config.power = p
-        module.refresh(SensorSnapshot(battery: BatteryStats(levelPercent: 76, isCharging: true)))
+        module.refresh(SensorSnapshot(battery: BatteryStats(levelPercent: 76, isCharging: true, isOnAC: true)))
         #expect(module.headline == "76%")
         #expect(module.subline == "limit 80% · charging")
     }
 
     @Test func sublineWithoutLimit() {
         let (module, _, _) = makeModule()
-        module.refresh(SensorSnapshot(battery: BatteryStats(levelPercent: 90, isCharging: false)))
+        module.refresh(SensorSnapshot(battery: BatteryStats(levelPercent: 90, isCharging: false, isOnAC: false)))
         #expect(module.subline == "on battery")
+    }
+
+    @Test func sublineInhibitedOnACShowsPluggedIn() {
+        let (module, config, _) = makeModule()
+        var p = config.power; p.chargeLimitEnabled = true; p.chargeLimitPercent = 80
+        config.power = p
+        module.refresh(SensorSnapshot(battery: BatteryStats(levelPercent: 80, isCharging: false, isOnAC: true)))
+        #expect(module.subline == "limit 80% · plugged in")
     }
 
     @Test func noBatteryShowsPlaceholder() {

@@ -11,6 +11,7 @@ public final class FanControlCoordinator {
 
     private let config: ConfigStore
     private let power: any PowerControlling
+    @ObservationIgnored private var tickInFlight = false
     @ObservationIgnored private var curveEngine: FanCurveEngine?
     @ObservationIgnored private var lastSentTargets: [Double]?
     @ObservationIgnored private var lastMode: FanControlMode = .auto
@@ -22,6 +23,9 @@ public final class FanControlCoordinator {
 
     /// Called once per sensor snapshot (wired from refreshModules).
     public func tick(_ snapshot: SensorSnapshot) async {
+        guard !tickInFlight else { return }
+        tickInFlight = true
+        defer { tickInFlight = false }
         guard !snapshot.fans.isEmpty else { return }   // fanless: nothing to control
         let mode = config.power.fanMode
 

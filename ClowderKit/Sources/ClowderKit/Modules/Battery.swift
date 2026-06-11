@@ -21,7 +21,10 @@ public final class BatteryModule: Module {
     public var headline: String { stats.map { "\($0.levelPercent)%" } ?? "—" }
     public var subline: String {
         guard let stats else { return "no battery" }
-        let charge = stats.isCharging ? "charging" : "on battery"
+        let charge: String
+        if stats.isCharging { charge = "charging" }
+        else if stats.isOnAC { charge = "plugged in" }
+        else { charge = "on battery" }
         return config.power.chargeLimitEnabled
             ? "limit \(config.power.chargeLimitPercent)% · \(charge)" : charge
     }

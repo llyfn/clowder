@@ -51,8 +51,9 @@ public struct DiskStats: Equatable, Sendable {
 public struct BatteryStats: Equatable, Sendable {
     public var levelPercent: Int
     public var isCharging: Bool
-    public init(levelPercent: Int, isCharging: Bool) {
-        self.levelPercent = levelPercent; self.isCharging = isCharging
+    public var isOnAC: Bool
+    public init(levelPercent: Int, isCharging: Bool, isOnAC: Bool) {
+        self.levelPercent = levelPercent; self.isCharging = isCharging; self.isOnAC = isOnAC
     }
 }
 
