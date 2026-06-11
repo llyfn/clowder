@@ -10,13 +10,15 @@ import SwiftUI
 @MainActor
 final class SettingsOpener {
     static let shared = SettingsOpener()
+    private init() {}
     fileprivate var openAction: (() -> Void)?
 
     /// Activates the app first: as an LSUIElement accessory app, the settings
     /// window would otherwise open behind the frontmost app's windows.
     func open() {
+        guard let action = openAction else { return }
         NSApp.activate()
-        openAction?()
+        action()
     }
 }
 
