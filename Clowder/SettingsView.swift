@@ -71,8 +71,11 @@ private struct ModulesSettingsTab: View {
             }
             Section("Show in Menu Bar") {
                 ForEach(barCapableModules, id: \.id) { module in
+                    let enabled = environment.config.config(for: module.id).enabled
                     Toggle(module.id.displayName, isOn: binding(\.promotedToBar, for: module.id))
-                        .disabled(!environment.config.config(for: module.id).enabled)
+                        .disabled(!enabled)
+                        // .disabled alone barely dims the row in a grouped form.
+                        .opacity(enabled ? 1 : 0.4)
                 }
             }
         }

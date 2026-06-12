@@ -29,8 +29,9 @@ final class SettingsOpener {
         if window == nil {
             let hosting = NSHostingController(rootView: SettingsView(environment: environment))
             let window = NSWindow(contentViewController: hosting)
-            window.title = "Clowder Settings"
+            window.title = "Settings"
             window.styleMask = [.titled, .closable, .miniaturizable]
+            window.titlebarSeparatorStyle = .none   // no hard line above the tab strip
             window.isReleasedWhenClosed = false   // keep for reuse across opens
             window.center()
             self.window = window
