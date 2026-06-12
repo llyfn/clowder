@@ -34,9 +34,6 @@ final class StatusItemController: NSObject {
             button.action = #selector(handleClick)
             button.target = self
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
-            let bridge = NSHostingView(rootView: SettingsOpenerBridge())
-            bridge.setFrameSize(.zero)
-            button.addSubview(bridge)
         }
         popover.behavior = .transient
         popover.contentViewController = NSHostingController(

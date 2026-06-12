@@ -1,33 +1,41 @@
 import AppKit
+import OSLog
 import SwiftUI
 
-/// SwiftUI `Settings` scenes can only be opened via the `openSettings`
-/// environment action (the old `showSettingsWindow:` selector is a no-op on
-/// modern macOS), and that action is only reachable from inside a live view.
-/// `SettingsOpenerBridge` is a zero-size view installed in the status item's
-/// button — always in a visible window — that captures the action at launch so
-/// AppKit code (the right-click menu) can open Settings too.
+/// Programmatically-managed Settings window. The SwiftUI `Settings` scene can
+/// only be opened via the `openSettings` environment action, and that action
+/// silently does nothing when invoked from standalone hosting views (the
+/// status item button, the panel popover) — they aren't part of the app's
+/// scene graph. A plain AppKit window hosting the same SettingsView sidesteps
+/// the scene machinery entirely.
 @MainActor
 final class SettingsOpener {
     static let shared = SettingsOpener()
     private init() {}
-    fileprivate var openAction: (() -> Void)?
+
+    /// Injected once at launch by AppDelegate.
+    var environment: AppEnvironment?
+
+    private var window: NSWindow?
+    private let log = Logger(subsystem: "dev.clowder.Clowder", category: "settings")
 
     /// Activates the app first: as an LSUIElement accessory app, the settings
     /// window would otherwise open behind the frontmost app's windows.
     func open() {
-        guard let action = openAction else { return }
+        guard let environment else {
+            log.error("SettingsOpener.open() called before environment injection")
+            return
+        }
+        if window == nil {
+            let hosting = NSHostingController(rootView: SettingsView(environment: environment))
+            let window = NSWindow(contentViewController: hosting)
+            window.title = "Clowder Settings"
+            window.styleMask = [.titled, .closable, .miniaturizable]
+            window.isReleasedWhenClosed = false   // keep for reuse across opens
+            window.center()
+            self.window = window
+        }
         NSApp.activate()
-        action()
-    }
-}
-
-struct SettingsOpenerBridge: View {
-    @Environment(\.openSettings) private var openSettings
-
-    var body: some View {
-        Color.clear
-            .frame(width: 0, height: 0)
-            .onAppear { SettingsOpener.shared.openAction = { openSettings() } }
+        window?.makeKeyAndOrderFront(nil)
     }
 }

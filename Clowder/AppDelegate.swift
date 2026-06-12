@@ -12,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         environment = AppEnvironment()
+        SettingsOpener.shared.environment = environment
         statusController = StatusItemController(environment: environment)
         promotedController = PromotedItemsController(environment: environment)
         environment.store.start(interval: environment.config.general.pollInterval)
