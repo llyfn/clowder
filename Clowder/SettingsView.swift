@@ -64,28 +64,30 @@ private struct ModulesSettingsTab: View {
 
     var body: some View {
         Form {
-            ForEach(environment.allModules, id: \.id) { module in
-                let binding = configBinding(for: module.id)
-                Section(module.id.displayName) {
-                    Toggle("Enabled", isOn: binding.enabled)
-                    if module.barItemView != nil {
-                        Toggle("Show in Menu Bar", isOn: binding.promotedToBar)
-                            .disabled(!binding.enabled.wrappedValue)
-                    }
+            Section("Features") {
+                ForEach(environment.allModules, id: \.id) { module in
+                    Toggle(module.id.displayName, isOn: binding(\.enabled, for: module.id))
+                }
+            }
+            Section("Show in Menu Bar") {
+                ForEach(barCapableModules, id: \.id) { module in
+                    Toggle(module.id.displayName, isOn: binding(\.promotedToBar, for: module.id))
+                        .disabled(!environment.config.config(for: module.id).enabled)
                 }
             }
         }
         .formStyle(.grouped)
     }
 
-    private func configBinding(for id: ModuleID) -> (enabled: Binding<Bool>, promotedToBar: Binding<Bool>) {
+    private var barCapableModules: [any Module] {
+        environment.allModules.filter { $0.barItemView != nil }
+    }
+
+    private func binding(_ keyPath: WritableKeyPath<ModuleConfig, Bool>, for id: ModuleID) -> Binding<Bool> {
         let config = environment.config
-        return (
-            enabled: Binding(get: { config.config(for: id).enabled },
-                             set: { var c = config.config(for: id); c.enabled = $0; config.setConfig(c, for: id) }),
-            promotedToBar: Binding(get: { config.config(for: id).promotedToBar },
-                                   set: { var c = config.config(for: id); c.promotedToBar = $0; config.setConfig(c, for: id) })
-        )
+        return Binding(
+            get: { config.config(for: id)[keyPath: keyPath] },
+            set: { var c = config.config(for: id); c[keyPath: keyPath] = $0; config.setConfig(c, for: id) })
     }
 }
 
