@@ -14,7 +14,7 @@ public final class CPUModule: Module {
 
     public var headline: String { stats.map { Format.percent($0.totalLoad) } ?? "—" }
     public var tileView: AnyView { AnyView(StatTile(label: "CPU", headline: headline,
-                                                    subline: stats.map { "\($0.perCore.count) cores" } ?? "",
+                                                    subline: stats.map { "\($0.perCore.count) Cores" } ?? "",
                                                     icon: "cpu")) }
     public var barItemView: AnyView? { AnyView(Text(headline).monospacedDigit()) }
 }
@@ -34,7 +34,7 @@ public final class TempsModule: Module {
 
     public var headline: String { temps.map(\.celsius).max().map(Format.temp) ?? "—" }
     public var fanLine: String {
-        fans.isEmpty ? "no fans" : fans.map { "\(Int($0.rpm.rounded())) rpm" }.joined(separator: " · ")
+        fans.isEmpty ? "No Fans" : fans.map { "\(Int($0.rpm.rounded())) RPM" }.joined(separator: " · ")
     }
     public var tileView: AnyView { AnyView(StatTile(label: "Temp", headline: headline,
                                                     subline: fanLine, icon: "thermometer.medium")) }
@@ -53,10 +53,21 @@ public final class MemoryModule: Module {
     }
 
     public var headline: String { stats.map { Format.bytes($0.usedBytes) } ?? "—" }
-    public var subline: String { stats.map { "pressure \($0.pressure.rawValue)" } ?? "" }
+    public var subline: String { stats.map { "Pressure \($0.pressure.displayName)" } ?? "" }
     public var tileView: AnyView { AnyView(StatTile(label: "Memory", headline: headline,
                                                     subline: subline, icon: "memorychip")) }
     public var barItemView: AnyView? { AnyView(Text(headline).monospacedDigit()) }
+}
+
+private extension MemoryPressure {
+    /// Title Case for display; raw values are lowercased identifiers.
+    var displayName: String {
+        switch self {
+        case .ok: "OK"
+        case .warning: "Warning"
+        case .critical: "Critical"
+        }
+    }
 }
 
 @Observable @MainActor
@@ -93,7 +104,7 @@ public final class DiskModule: Module {
         stats = snapshot.disk
     }
 
-    public var headline: String { stats.map { "\(Format.bytes($0.freeBytes)) free" } ?? "—" }
+    public var headline: String { stats.map { "\(Format.bytes($0.freeBytes)) Free" } ?? "—" }
     public var tileView: AnyView { AnyView(StatTile(label: "Disk", headline: headline,
                                                     subline: stats.map { "of \(Format.bytes($0.totalBytes))" } ?? "",
                                                     icon: "internaldrive")) }

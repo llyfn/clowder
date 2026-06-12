@@ -13,7 +13,7 @@ public struct StatTile: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Label(label.uppercased(), systemImage: icon)
+            Label(label, systemImage: icon)
                 .font(.caption2).foregroundStyle(.secondary)
             Text(headline).font(.title3.weight(.semibold)).monospacedDigit()
             Text(subline).font(.caption).foregroundStyle(.secondary)

@@ -47,7 +47,7 @@ struct TempsExpandedView: View {
                             HStack {
                                 Text("Fan \(fan.id)").font(.caption)
                                 Spacer()
-                                Text("\(Int(fan.rpm.rounded())) rpm").font(.caption.monospacedDigit())
+                                Text("\(Int(fan.rpm.rounded())) RPM").font(.caption.monospacedDigit())
                             }
                         }
                         // Spec: per-fan sliders live here in manual mode only.

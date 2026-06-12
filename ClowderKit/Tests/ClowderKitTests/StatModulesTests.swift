@@ -24,11 +24,11 @@ struct StatModulesTests {
 
         #expect(cpu.headline == "38%")
         #expect(temps.headline == "52°")                  // hottest sensor
-        #expect(temps.fanLine == "1820 rpm")
+        #expect(temps.fanLine == "1820 RPM")
         #expect(memory.headline == "18.2 GB")
         #expect(network.downLine == "↓ 2.1 MB/s")
         #expect(network.upLine == "↑ 340 KB/s")
-        #expect(disk.headline == "412 GB free")
+        #expect(disk.headline == "412 GB Free")
     }
 
     @Test func missingDataShowsPlaceholder() {
@@ -38,6 +38,6 @@ struct StatModulesTests {
         let temps = TempsModule()
         temps.refresh(SensorSnapshot())
         #expect(temps.headline == "—")
-        #expect(temps.fanLine == "no fans")
+        #expect(temps.fanLine == "No Fans")
     }
 }

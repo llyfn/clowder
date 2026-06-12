@@ -21,13 +21,13 @@ struct PowerSettingsTab: View {
     }
 
     private var helperSection: some View {
-        Section("Privileged helper") {
+        Section("Privileged Helper") {
             switch environment.helper.availability {
             case .ready:
                 Label("Connected", systemImage: "checkmark.circle.fill")
                     .foregroundStyle(.green)
             case .requiresApproval:
-                LabeledContent("Waiting for approval") {
+                LabeledContent("Waiting for Approval") {
                     Button("Open System Settings") { environment.helper.connect() }
                 }
             case .unavailable(let reason):
@@ -44,11 +44,11 @@ struct PowerSettingsTab: View {
 
     private var chargeSection: some View {
         Section("Battery") {
-            Toggle("Limit charging", isOn: Binding(
+            Toggle("Limit Charging", isOn: Binding(
                 get: { config.power.chargeLimitEnabled },
                 set: { on in Task { _ = await environment.battery.applyChargeLimit(
                     enabled: on, percent: config.power.chargeLimitPercent) } }))
-            Stepper("Charge limit: \(config.power.chargeLimitPercent)%",
+            Stepper("Charge Limit: \(config.power.chargeLimitPercent)%",
                     value: Binding(
                         get: { config.power.chargeLimitPercent },
                         set: { v in Task { _ = await environment.battery.applyChargeLimit(
@@ -101,7 +101,7 @@ private struct CurveEditor: View {
             HStack {
                 Stepper(point.map { "\(Int($0.celsius)) °C" } ?? "—",
                         value: bindingFor(i, \.celsius), in: 30...110, step: 5)
-                Stepper(point.map { "\(Int($0.rpm)) rpm" } ?? "—",
+                Stepper(point.map { "\(Int($0.rpm)) RPM" } ?? "—",
                         value: bindingFor(i, \.rpm), in: 1000...7000, step: 250)
                 Button(role: .destructive) { removePoint(i) } label: {
                     Image(systemName: "minus.circle")
@@ -117,7 +117,7 @@ private struct CurveEditor: View {
             points.append(CurvePoint(celsius: 100, rpm: 6500))
             p.curve = FanCurve(points: points)
             config.power = p
-        } label: { Label("Add point", systemImage: "plus.circle") }
+        } label: { Label("Add Point", systemImage: "plus.circle") }
         .disabled(config.power.curve.points.count >= 5)
     }
 

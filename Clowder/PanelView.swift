@@ -64,7 +64,7 @@ struct PanelView: View {
             ? "\(environment.network.upLine) · \(environment.disk.headline)"
             : environment.network.upLine
         return AnyView(VStack(alignment: .leading, spacing: 2) {
-            Label("NETWORK", systemImage: "network")
+            Label("Network", systemImage: "network")
                 .font(.caption2).foregroundStyle(.secondary)
             Text(environment.network.downLine).font(.title3.weight(.semibold)).monospacedDigit()
             Text(subline)

@@ -16,7 +16,7 @@ struct FanRPMSliders: View {
                     set: { v in var p = config.power
                            p.manualRPMs[fan.id] = v.rounded(); config.power = p }),
                     in: fan.minRPM...fan.maxRPM)
-                Text("\(Int(config.power.manualRPMs[fan.id] ?? fan.minRPM)) rpm")
+                Text("\(Int(config.power.manualRPMs[fan.id] ?? fan.minRPM)) RPM")
                     .font(.caption.monospacedDigit()).frame(width: 70)
             }
         }

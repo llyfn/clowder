@@ -16,8 +16,7 @@ struct SettingsView: View {
             AboutSettingsTab()
                 .tabItem { Label("About", systemImage: "info.circle") }
         }
-        .frame(width: 420)
-        .padding(20)
+        .frame(width: 500, height: 440)
     }
 }
 
@@ -31,7 +30,7 @@ private struct GeneralSettingsTab: View {
 
     var body: some View {
         Form {
-            Toggle("Launch at login", isOn: $launchAtLogin)
+            Toggle("Launch at Login", isOn: $launchAtLogin)
                 .onChange(of: launchAtLogin) { _, on in
                     do {
                         if on {
@@ -43,11 +42,11 @@ private struct GeneralSettingsTab: View {
                         launchAtLogin = SMAppService.mainApp.status == .enabled
                     }
                 }
-            LabeledContent("Update every") {
+            LabeledContent("Update Every") {
                 Slider(value: $config.general.pollInterval, in: 1...10, step: 1) {
                     EmptyView()
                 } minimumValueLabel: { Text("1s") } maximumValueLabel: { Text("10s") }
-                .frame(width: 200)
+                .frame(width: 220)
             }
             Picker("Runner", selection: $config.general.character) {
                 ForEach(RunnerCharacter.allCases, id: \.self) { c in
@@ -56,6 +55,7 @@ private struct GeneralSettingsTab: View {
             }
             .pickerStyle(.segmented)
         }
+        .formStyle(.grouped)
     }
 }
 
@@ -66,10 +66,10 @@ private struct ModulesSettingsTab: View {
         Form {
             ForEach(environment.allModules, id: \.id) { module in
                 let binding = configBinding(for: module.id)
-                Section(module.id.rawValue.capitalized) {
+                Section(module.id.displayName) {
                     Toggle("Enabled", isOn: binding.enabled)
                     if module.barItemView != nil {
-                        Toggle("Show in menu bar", isOn: binding.promotedToBar)
+                        Toggle("Show in Menu Bar", isOn: binding.promotedToBar)
                             .disabled(!binding.enabled.wrappedValue)
                     }
                 }
@@ -86,5 +86,22 @@ private struct ModulesSettingsTab: View {
             promotedToBar: Binding(get: { config.config(for: id).promotedToBar },
                                    set: { var c = config.config(for: id); c.promotedToBar = $0; config.setConfig(c, for: id) })
         )
+    }
+}
+
+private extension ModuleID {
+    /// Title Case display names; raw values are lowercased identifiers
+    /// (`keepAwake`.capitalized would render as "Keepawake").
+    var displayName: String {
+        switch self {
+        case .cpu: "CPU"
+        case .keepAwake: "Keep Awake"
+        case .temps: "Temperatures"
+        case .fans: "Fans"
+        case .battery: "Battery"
+        case .network: "Network"
+        case .memory: "Memory"
+        case .disk: "Disk"
+        }
     }
 }

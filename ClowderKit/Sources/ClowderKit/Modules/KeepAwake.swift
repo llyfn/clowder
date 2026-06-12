@@ -104,16 +104,16 @@ struct KeepAwakeTile: View {
 
     var body: some View {
         HStack {
-            Label("Keep awake", systemImage: module.engine.state == .off ? "cup.and.saucer" : "cup.and.saucer.fill")
+            Label("Keep Awake", systemImage: module.engine.state == .off ? "cup.and.saucer" : "cup.and.saucer.fill")
             if let remaining = module.engine.remaining {
                 Text(Duration.seconds(remaining).formatted(.time(pattern: .hourMinute)))
                     .foregroundStyle(.secondary).font(.caption)
             }
             Spacer()
             Menu {
-                Button("15 minutes") { module.engine.enable(for: 15 * 60) }
-                Button("1 hour") { module.engine.enable(for: 60 * 60) }
-                Button("Until turned off") { module.engine.enable(for: nil) }
+                Button("15 Minutes") { module.engine.enable(for: 15 * 60) }
+                Button("1 Hour") { module.engine.enable(for: 60 * 60) }
+                Button("Until Turned Off") { module.engine.enable(for: nil) }
             } label: { Image(systemName: "timer") }
             .menuStyle(.borderlessButton).fixedSize()
             Toggle("", isOn: Binding(

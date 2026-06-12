@@ -20,13 +20,13 @@ public final class BatteryModule: Module {
 
     public var headline: String { stats.map { "\($0.levelPercent)%" } ?? "—" }
     public var subline: String {
-        guard let stats else { return "no battery" }
+        guard let stats else { return "No Battery" }
         let charge: String
-        if stats.isCharging { charge = "charging" }
-        else if stats.isOnAC { charge = "plugged in" }
-        else { charge = "on battery" }
+        if stats.isCharging { charge = "Charging" }
+        else if stats.isOnAC { charge = "Plugged In" }
+        else { charge = "On Battery" }
         return config.power.chargeLimitEnabled
-            ? "limit \(config.power.chargeLimitPercent)% · \(charge)" : charge
+            ? "Limit \(config.power.chargeLimitPercent)% · \(charge)" : charge
     }
     public var availability: PowerAvailability { power.availability }
 
@@ -65,11 +65,15 @@ struct ChargeLimitTile: View {
 
     var body: some View {
         HStack {
-            Label("Charge limit", systemImage: "battery.75percent")
-            Text(module.headline + " · " + module.subline)
-                .font(.caption).foregroundStyle(.secondary)
-            if let pendingError {
-                Text(pendingError).font(.caption2).foregroundStyle(.red).lineLimit(1)
+            // Two lines: title above, status below — keeps the title from
+            // wrapping when the stepper and toggle crowd the trailing edge.
+            VStack(alignment: .leading, spacing: 2) {
+                Label("Charge Limit", systemImage: "battery.75percent")
+                Text(module.headline + " · " + module.subline)
+                    .font(.caption).foregroundStyle(.secondary)
+                if let pendingError {
+                    Text(pendingError).font(.caption2).foregroundStyle(.red).lineLimit(1)
+                }
             }
             Spacer()
             switch module.availability {
