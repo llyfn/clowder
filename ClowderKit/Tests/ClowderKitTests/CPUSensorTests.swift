@@ -60,4 +60,25 @@ struct CPUSensorTests {
         #expect(stats!.perCore[0] == 0.0)
         #expect(stats!.totalLoad == 0.0)
     }
+
+    @Test func aggregatesUserSystemIdle() {
+        var calc = CPULoadCalculator()
+        _ = calc.update(with: [CoreTicks(user: 0, system: 0, idle: 0, nice: 0)])
+        // +20 user, +10 nice (user side = 30), +10 system, +60 idle => total 100
+        let stats = calc.update(with: [CoreTicks(user: 20, system: 10, idle: 60, nice: 10)])
+        #expect(stats != nil)
+        #expect(abs(stats!.userLoad - 0.30) < 0.0001)    // (user+nice)/total
+        #expect(abs(stats!.systemLoad - 0.10) < 0.0001)
+        #expect(abs(stats!.idleLoad - 0.60) < 0.0001)
+        // totalLoad (busy) stays user+system+nice = 0.40
+        #expect(abs(stats!.totalLoad - 0.40) < 0.0001)
+    }
+
+    @Test func aggregateIsZeroWhenNoDelta() {
+        var calc = CPULoadCalculator()
+        _ = calc.update(with: [CoreTicks(user: 5, system: 5, idle: 90, nice: 0)])
+        let stats = calc.update(with: [CoreTicks(user: 5, system: 5, idle: 90, nice: 0)])
+        #expect(stats != nil)
+        #expect(stats!.userLoad == 0 && stats!.systemLoad == 0 && stats!.idleLoad == 0)
+    }
 }

@@ -9,11 +9,18 @@ public enum RunnerCharacter: String, CaseIterable, Codable, Sendable {
 }
 
 public struct CPUStats: Equatable, Sendable {
-    public var totalLoad: Double      // 0...1
+    public var totalLoad: Double      // 0...1, arithmetic mean of per-core busy fractions
     public var perCore: [Double]      // 0...1 each
-    public init(totalLoad: Double, perCore: [Double]) {
+    public var userLoad: Double       // 0...1, (user+nice)/total aggregated across cores
+    public var systemLoad: Double     // 0...1, system/total aggregated across cores
+    public var idleLoad: Double       // 0...1, idle/total aggregated across cores
+    public init(totalLoad: Double, perCore: [Double],
+                userLoad: Double = 0, systemLoad: Double = 0, idleLoad: Double = 0) {
         self.totalLoad = totalLoad
         self.perCore = perCore
+        self.userLoad = userLoad
+        self.systemLoad = systemLoad
+        self.idleLoad = idleLoad
     }
 }
 

@@ -29,15 +29,23 @@ public struct CPULoadCalculator: Sendable {
         guard let prev = previous, prev.count == ticks.count else { return nil }
         var perCore: [Double] = []
         perCore.reserveCapacity(ticks.count)
+        var sumUser: UInt64 = 0, sumSystem: UInt64 = 0, sumIdle: UInt64 = 0, sumTotal: UInt64 = 0
         for (p, n) in zip(prev, ticks) {
-            let busy = delta(p.user, n.user) + delta(p.system, n.system) + delta(p.nice, n.nice)
+            let user = delta(p.user, n.user) + delta(p.nice, n.nice)
+            let system = delta(p.system, n.system)
             let idle = delta(p.idle, n.idle)
+            let busy = user + system
             let total = busy + idle
             perCore.append(total == 0 ? 0 : Double(busy) / Double(total))
+            sumUser += user; sumSystem += system; sumIdle += idle; sumTotal += total
         }
         guard !perCore.isEmpty else { return nil }
         let avg = perCore.reduce(0, +) / Double(perCore.count)
-        return CPUStats(totalLoad: avg, perCore: perCore)
+        let denom = sumTotal == 0 ? 1 : Double(sumTotal)
+        return CPUStats(totalLoad: avg, perCore: perCore,
+                        userLoad: Double(sumUser) / denom,
+                        systemLoad: Double(sumSystem) / denom,
+                        idleLoad: Double(sumIdle) / denom)
     }
 }
 
