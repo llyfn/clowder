@@ -26,6 +26,7 @@ final class AppEnvironment {
         store = SensorStore(sources: SensorSuite(
             cpu: DarwinCPUSource(), memory: DarwinMemorySource(),
             network: GetifaddrsNetworkSource(), disk: RootVolumeDiskSource(),
+            diskIO: IORegistryDiskIOSource(),
             tempsFans: tempsFans, battery: IOPSBatterySource()))
         fanControl = FanControlCoordinator(config: config, power: helper)
         battery = BatteryModule(config: config, power: helper)

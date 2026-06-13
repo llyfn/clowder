@@ -33,12 +33,16 @@ private struct FakeTempsFans: TempsFansProviding {
 private struct FakeBattery: BatterySource {
     func sample() throws -> BatteryStats { BatteryStats(levelPercent: 76, isCharging: true, isOnAC: true) }
 }
+private struct StubDiskIO: DiskIOSource {
+    func sampleCounters() throws -> DiskIOCounters { DiskIOCounters(readBytes: 0, writeBytes: 0, date: Date()) }
+}
 
 @MainActor
 struct SensorStoreTests {
     private func makeStore(cpu: any CPUSource = FakeCPU()) -> SensorStore {
         SensorStore(sources: SensorSuite(cpu: cpu, memory: FakeMemory(),
                                          network: FakeNetwork(), disk: FakeDisk(),
+                                         diskIO: StubDiskIO(),
                                          tempsFans: FakeTempsFans(), battery: FakeBattery()))
     }
 
@@ -49,6 +53,7 @@ struct SensorStoreTests {
         #expect(store.snapshot.cpu != nil)
         #expect(store.snapshot.memory?.usedBytes == 3)
         #expect(store.snapshot.disk?.freeBytes == 5)
+        #expect(store.snapshot.diskIO != nil)
         #expect(store.snapshot.temps.first?.celsius == 48)
         #expect(store.snapshot.battery?.levelPercent == 76)
     }
