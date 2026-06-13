@@ -106,7 +106,7 @@ private extension ModuleID {
         case .battery: "Battery"
         case .network: "Network"
         case .memory: "Memory"
-        case .disk: "Disk"
+        case .disk: "Storage"
         }
     }
 }
