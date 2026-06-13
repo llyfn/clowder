@@ -68,9 +68,9 @@ public final class MemoryModule: Module {
     public var barItemView: AnyView? { AnyView(BarLabel(icon: "memorychip", text: headline)) }
 }
 
-private extension MemoryPressure {
+public extension MemoryPressure {
     /// Title Case for display; raw values are lowercased identifiers.
-    var displayName: String {
+    public var displayName: String {
         switch self {
         case .ok: "OK"
         case .warning: "Warning"
