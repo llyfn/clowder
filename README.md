@@ -1,19 +1,19 @@
 # Clowder
 
-A macOS menu bar app that bundles the system utilities you usually install separately: an animated CPU runner, keep-awake, temperature and fan monitoring with fan control, battery charge limiting, and live network/memory/disk stats. One app, one icon, native Liquid Glass UI.
+A macOS menu bar app that bundles the system utilities you usually install separately: an animated CPU runner, keep-awake, temperature and fan monitoring with fan control, battery charge limiting, and live network/memory/storage stats. One app, one icon, native Liquid Glass UI. Click any stat tile for a detail chart and breakdown.
 
 ## Features
 
 | Module | What it does |
 |---|---|
-| CPU runner | A trio of cats runs in the menu bar; their speed tracks CPU load (solo cat, dog, and rocket characters available in Settings) |
+| CPU runner | A trio of cats runs in the menu bar; their speed tracks CPU load (a single cat is also available in Settings) |
 | Keep-awake | Prevent sleep, with timers (15 min / 1 h / until turned off) |
 | Temperatures | Sensor temperatures and fan RPMs |
 | Fan control | Auto mode, fixed RPM, or temperature-based curves — with a safety floor and a 95 °C failsafe |
 | Battery charge limit | Cap charging at 50–100% to reduce battery wear |
 | Network | Up/down throughput |
 | Memory | Usage and pressure |
-| Disk | Free/used space |
+| Storage | Free/used space and live read/write I/O |
 
 ## Requirements
 
