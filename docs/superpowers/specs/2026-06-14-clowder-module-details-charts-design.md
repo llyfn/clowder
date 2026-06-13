@@ -38,7 +38,7 @@ match the existing `StatTile` / detail-card look.
 | CPU      | User % and System % over window    | System %, User %, Idle % |
 | Memory   | App / Wired / Compressed (bytes)   | App, Wired, Compressed, Pressure |
 | Network  | down and up bytes/sec              | current down / up rate |
-| Storage  | read & write bytes/sec (I/O chart) | Used / Free / Total |
+| Storage  | read & write bytes/sec (I/O chart; see §5 fallback) | Used / Free / Total |
 | Battery  | level % over a 12-hour window      | charging state + charge-limit toggle/stepper (moved here) |
 | Temps    | hottest sensor degrees C over window | existing per-sensor list, fan RPMs, manual fan sliders (unchanged) |
 
@@ -69,13 +69,21 @@ rates. Output is a new `DiskIORates { readBytesPerSec, writeBytesPerSec }` field
 Disk **capacity** (free/total) continues to come from the existing `RootVolumeDiskSource`
 for the tile headline. `SensorSuite` gains the new source; `SensorStore.tick()` samples it.
 
+**Fallback:** the I/O sensor is read-only IORegistry traversal (the standard approach for
+menu-bar stat apps), so risk is low. If on-device verification fails to produce sane
+read/write rates, Storage degrades gracefully to a Used/Free capacity detail view with no
+I/O line chart — no broken chart ships.
+
 ## 6. Stat-shape changes
 
 - `CPUStats` gains `userLoad`, `systemLoad`, `idleLoad` (each 0…1), aggregated across cores
   from the user/system/idle/nice tick deltas already collected in `CoreTicks`. Mapping:
   User = (user + nice) / total, System = system / total, Idle = idle / total.
-- `MemoryStats` gains `appBytes` (= active), `wiredBytes`, `compressedBytes` — all already
-  read in `MemorySample` and currently discarded by `MemoryStatsCalculator`.
+- `MemoryStats` gains `appBytes`, `wiredBytes`, `compressedBytes`. App Memory uses the
+  accurate Activity-Monitor figure `(internal_page_count − purgeable_count) × pageSize`,
+  read from the *same* `host_statistics64` call already made each tick (no added overhead).
+  `MemorySample` extends to carry `internal`/`purgeable` page counts; `wiredBytes` and
+  `compressedBytes` are already read and currently discarded by `MemoryStatsCalculator`.
 
 ## 7. UI changes
 
