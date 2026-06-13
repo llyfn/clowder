@@ -6,14 +6,17 @@ public enum Format {
         let units = ["B", "KB", "MB", "GB", "TB"]
         var v = value
         var i = 0
-        while v >= 1000, i < units.count - 1 { v /= 1000; i += 1 }
+        while v >= 1000, i < units.count - 1 {
+            v /= 1000
+            i += 1
+        }
         return (v, units[i])
     }
 
     private static func trim(_ v: Double) -> String {
         let rounded = v.rounded()
         if v >= 100 || v == rounded { return String(Int(rounded)) }
-        let s = String(format: "%.1f", v)   // C locale: always "." separator
+        let s = String(format: "%.1f", v)  // C locale: always "." separator
         // %.1f may round up to a whole number (e.g. 99.95 -> "100.0"); strip the decimal.
         return s.hasSuffix(".0") ? String(s.dropLast(2)) : s
     }

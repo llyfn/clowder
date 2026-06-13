@@ -44,8 +44,9 @@ public enum SMCValueDecoder {
             return Double(UInt16(bytes[0]) << 8 | UInt16(bytes[1]))
         case "ui32":
             guard bytes.count >= 4 else { return nil }
-            return Double(UInt32(bytes[0]) << 24 | UInt32(bytes[1]) << 16
-                          | UInt32(bytes[2]) << 8 | UInt32(bytes[3]))
+            return Double(
+                UInt32(bytes[0]) << 24 | UInt32(bytes[1]) << 16
+                    | UInt32(bytes[2]) << 8 | UInt32(bytes[3]))
         default:
             return nil
         }
@@ -56,7 +57,8 @@ public struct SMCKeyInfo: Equatable, Sendable {
     public var dataSize: UInt32
     public var dataType: String
     public init(dataSize: UInt32, dataType: String) {
-        self.dataSize = dataSize; self.dataType = dataType
+        self.dataSize = dataSize
+        self.dataType = dataType
     }
 }
 
@@ -67,11 +69,12 @@ public protocol SMCConnecting: Sendable {
     func readBytes(_ key: SMCKey, info: SMCKeyInfo) throws -> [UInt8]
 }
 
-public extension SMCConnecting {
+extension SMCConnecting {
     /// Read a key and decode it, or nil if the key/type is unsupported.
-    func readValue(_ key: SMCKey) -> Double? {
+    public func readValue(_ key: SMCKey) -> Double? {
         guard let info = try? keyInfo(key), info.dataSize > 0,
-              let bytes = try? readBytes(key, info: info) else { return nil }
+            let bytes = try? readBytes(key, info: info)
+        else { return nil }
         return SMCValueDecoder.decode(type: info.dataType, bytes: bytes)
     }
 }
@@ -81,12 +84,26 @@ public extension SMCConnecting {
 /// Wire struct for the AppleSMC user client (selector 2). Field layout must match the C ABI exactly (80 bytes).
 /// KeyInfoData is 12 bytes in C (3 bytes of implicit padding after dataAttributes) — we replicate that explicitly.
 struct SMCParamStruct {
-    struct Version { var major: UInt8 = 0; var minor: UInt8 = 0; var build: UInt8 = 0
-                     var reserved: UInt8 = 0; var release: UInt16 = 0 }
-    struct PLimitData { var version: UInt16 = 0; var length: UInt16 = 0
-                        var cpuPLimit: UInt32 = 0; var gpuPLimit: UInt32 = 0; var memPLimit: UInt32 = 0 }
-    struct KeyInfoData { var dataSize: UInt32 = 0; var dataType: UInt32 = 0; var dataAttributes: UInt8 = 0
-                         var _pad: (UInt8, UInt8, UInt8) = (0, 0, 0) }  // matches C padding to UInt32 alignment
+    struct Version {
+        var major: UInt8 = 0
+        var minor: UInt8 = 0
+        var build: UInt8 = 0
+        var reserved: UInt8 = 0
+        var release: UInt16 = 0
+    }
+    struct PLimitData {
+        var version: UInt16 = 0
+        var length: UInt16 = 0
+        var cpuPLimit: UInt32 = 0
+        var gpuPLimit: UInt32 = 0
+        var memPLimit: UInt32 = 0
+    }
+    struct KeyInfoData {
+        var dataSize: UInt32 = 0
+        var dataType: UInt32 = 0
+        var dataAttributes: UInt8 = 0
+        var _pad: (UInt8, UInt8, UInt8) = (0, 0, 0)
+    }  // matches C padding to UInt32 alignment
 
     var key: UInt32 = 0
     var vers = Version()
@@ -95,26 +112,36 @@ struct SMCParamStruct {
     var result: UInt8 = 0
     var status: UInt8 = 0
     var data8: UInt8 = 0
-    var _pad: UInt8 = 0                                                  // C pads here before UInt32 data32
+    var _pad: UInt8 = 0  // C pads here before UInt32 data32
     var data32: UInt32 = 0
-    var bytes: (UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8,
-                UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8,
-                UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8,
-                UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8) =
-        (0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+    var bytes:
+        (
+            UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8,
+            UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8,
+            UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8,
+            UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8
+        ) =
+            (
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0
+            )
 }
 
 public final class SMCClient: SMCConnecting, @unchecked Sendable {
     private enum Selector: UInt8 {
-        case readKey = 5, writeKey = 6, keyAtIndex = 8, keyInfo = 9
+        case readKey = 5
+        case writeKey = 6
+        case keyAtIndex = 8
+        case keyInfo = 9
     }
 
     private let connection: io_connect_t
     private let lock = NSLock()
 
     public init() throws {
-        let service = IOServiceGetMatchingService(kIOMainPortDefault,
-                                                  IOServiceMatching("AppleSMC"))
+        let service = IOServiceGetMatchingService(
+            kIOMainPortDefault,
+            IOServiceMatching("AppleSMC"))
         guard service != 0 else { throw SensorError.unavailable("AppleSMC service") }
         defer { IOObjectRelease(service) }
         var conn: io_connect_t = 0
@@ -132,9 +159,10 @@ public final class SMCClient: SMCConnecting, @unchecked Sendable {
         var input = input
         var output = SMCParamStruct()
         var outputSize = MemoryLayout<SMCParamStruct>.stride
-        let rc = IOConnectCallStructMethod(connection, 2, &input,
-                                           MemoryLayout<SMCParamStruct>.stride,
-                                           &output, &outputSize)
+        let rc = IOConnectCallStructMethod(
+            connection, 2, &input,
+            MemoryLayout<SMCParamStruct>.stride,
+            &output, &outputSize)
         guard rc == kIOReturnSuccess, output.result == 0 else {
             throw SensorError.readFailed("SMC call rc=\(rc) result=\(output.result)")
         }
@@ -163,8 +191,9 @@ public final class SMCClient: SMCConnecting, @unchecked Sendable {
         input.key = key.code
         input.data8 = Selector.keyInfo.rawValue
         let output = try call(input)
-        return SMCKeyInfo(dataSize: output.keyInfo.dataSize,
-                          dataType: SMCKey(code: output.keyInfo.dataType).string)
+        return SMCKeyInfo(
+            dataSize: output.keyInfo.dataSize,
+            dataType: SMCKey(code: output.keyInfo.dataType).string)
     }
 
     public func readBytes(_ key: SMCKey, info: SMCKeyInfo) throws -> [UInt8] {

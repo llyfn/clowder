@@ -1,5 +1,5 @@
-import Testing
 import HelperProtocol
+import Testing
 
 struct ProtocolTests {
     @Test func constantsAreStable() {

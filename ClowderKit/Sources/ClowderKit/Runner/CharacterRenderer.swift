@@ -35,9 +35,9 @@ public enum CharacterRenderer {
     /// Three cats mid-chase: a kitten trailing, a middle cat, and the leader
     /// out front — each on its own gait phase so the pack ripples.
     private static func drawClowder(phase: Double) {
-        drawCat(phase: phase + 4.2, offsetX: 0, scale: 0.62)   // kitten, trailing
+        drawCat(phase: phase + 4.2, offsetX: 0, scale: 0.62)  // kitten, trailing
         drawCat(phase: phase + 2.1, offsetX: 12, scale: 0.74)
-        drawCat(phase: phase, offsetX: 25, scale: 0.84)        // leader
+        drawCat(phase: phase, offsetX: 25, scale: 0.84)  // leader
     }
 
     /// A chibi cat: oversized head, gallop bounce, lagging head bob, curling
@@ -52,15 +52,17 @@ public enum CharacterRenderer {
 
         // Vertical budget on the 17 pt canvas: ear tips peak at
         // headY(max 8.8) + 8 = 16.8 — keep amplitudes small or ears clip.
-        let bounce = CGFloat(abs(sin(phase))) * 1.2        // body rises mid-stride
+        let bounce = CGFloat(abs(sin(phase))) * 1.2  // body rises mid-stride
         let headBob = CGFloat(sin(phase + .pi / 3)) * 0.6  // head lags the body
 
         // Legs first so the body overlaps the hips.
         drawGallopLegs(phase: phase, bounce: bounce)
 
         // Body: low rounded capsule.
-        NSBezierPath(roundedRect: NSRect(x: 5, y: 5 + bounce, width: 13, height: 6),
-                     xRadius: 3, yRadius: 3).fill()
+        NSBezierPath(
+            roundedRect: NSRect(x: 5, y: 5 + bounce, width: 13, height: 6),
+            xRadius: 3, yRadius: 3
+        ).fill()
 
         // Head: oversized circle, the main cuteness lever.
         let headY = 7 + bounce + headBob
@@ -81,9 +83,10 @@ public enum CharacterRenderer {
         // Tail: curved stroke waving against the stride.
         let tail = NSBezierPath()
         tail.move(to: NSPoint(x: 6, y: 9 + bounce))
-        tail.curve(to: NSPoint(x: 1.5, y: 12.5 + CGFloat(sin(phase)) * 1.8),
-                   controlPoint1: NSPoint(x: 3, y: 9.5 + bounce),
-                   controlPoint2: NSPoint(x: 1.5, y: 10.5))
+        tail.curve(
+            to: NSPoint(x: 1.5, y: 12.5 + CGFloat(sin(phase)) * 1.8),
+            controlPoint1: NSPoint(x: 3, y: 9.5 + bounce),
+            controlPoint2: NSPoint(x: 1.5, y: 10.5))
         tail.lineWidth = 1.6
         tail.lineCapStyle = .round
         tail.stroke()
@@ -93,9 +96,9 @@ public enum CharacterRenderer {
     /// during its forward swing. Round caps read as paws at menu bar size.
     private static func drawGallopLegs(phase: Double, bounce: CGFloat) {
         let legs: [(hipX: CGFloat, legPhase: Double)] = [
-            (7, phase),                          // back pair
+            (7, phase),  // back pair
             (8.5, phase + 0.45),
-            (15, phase + .pi * 0.75),            // front pair
+            (15, phase + .pi * 0.75),  // front pair
             (16.5, phase + .pi * 0.75 + 0.45),
         ]
         for leg in legs {

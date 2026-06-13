@@ -6,7 +6,8 @@ public struct CurvePoint: Codable, Equatable, Sendable {
     public var celsius: Double
     public var rpm: Double
     public init(celsius: Double, rpm: Double) {
-        self.celsius = celsius; self.rpm = rpm
+        self.celsius = celsius
+        self.rpm = rpm
     }
 }
 

@@ -11,10 +11,14 @@ struct FanRPMSliders: View {
     var body: some View {
         ForEach(fans) { fan in
             LabeledContent("Fan \(fan.id)") {
-                Slider(value: Binding(
-                    get: { config.power.manualRPMs[fan.id] ?? fan.minRPM },
-                    set: { v in var p = config.power
-                           p.manualRPMs[fan.id] = v.rounded(); config.power = p }),
+                Slider(
+                    value: Binding(
+                        get: { config.power.manualRPMs[fan.id] ?? fan.minRPM },
+                        set: { v in
+                            var p = config.power
+                            p.manualRPMs[fan.id] = v.rounded()
+                            config.power = p
+                        }),
                     in: fan.minRPM...fan.maxRPM)
                 Text("\(Int(config.power.manualRPMs[fan.id] ?? fan.minRPM)) RPM")
                     .font(.caption.monospacedDigit()).frame(width: 70)

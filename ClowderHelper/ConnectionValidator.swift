@@ -10,11 +10,15 @@ enum ConnectionValidator {
         var code: SecCode?
         let attributes = [kSecGuestAttributePid: pid] as CFDictionary
         guard SecCodeCopyGuestWithAttributes(nil, attributes, [], &code) == errSecSuccess,
-              let code else { return false }
+            let code
+        else { return false }
         var requirement: SecRequirement?
-        guard SecRequirementCreateWithString(
-                "identifier \"dev.clowder.Clowder\"" as CFString, [], &requirement) == errSecSuccess,
-              let requirement else { return false }
+        guard
+            SecRequirementCreateWithString(
+                "identifier \"dev.clowder.Clowder\"" as CFString, [], &requirement)
+                == errSecSuccess,
+            let requirement
+        else { return false }
         return SecCodeCheckValidity(code, [], requirement) == errSecSuccess
     }
 }

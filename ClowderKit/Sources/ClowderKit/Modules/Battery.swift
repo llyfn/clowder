@@ -8,7 +8,7 @@ public final class BatteryModule: Module {
     public private(set) var batteryHistory: [BatteryPoint] = []
     private var lastSampledAt: Date?
     private let minSampleInterval: TimeInterval = 60
-    private let historyCap = 720    // 12h at 1/min
+    private let historyCap = 720  // 12h at 1/min
 
     public let config: ConfigStore
     private let power: any PowerControlling
@@ -24,7 +24,9 @@ public final class BatteryModule: Module {
             let now = snapshot.date
             if lastSampledAt == nil || now.timeIntervalSince(lastSampledAt!) >= minSampleInterval {
                 batteryHistory.append(BatteryPoint(date: now, level: b.levelPercent))
-                if batteryHistory.count > historyCap { batteryHistory.removeFirst(batteryHistory.count - historyCap) }
+                if batteryHistory.count > historyCap {
+                    batteryHistory.removeFirst(batteryHistory.count - historyCap)
+                }
                 lastSampledAt = now
             }
         }
@@ -34,9 +36,13 @@ public final class BatteryModule: Module {
     public var subline: String {
         guard let stats else { return "No Battery" }
         let charge: String
-        if stats.isCharging { charge = "Charging" }
-        else if stats.isOnAC { charge = "Plugged In" }
-        else { charge = "On Battery" }
+        if stats.isCharging {
+            charge = "Charging"
+        } else if stats.isOnAC {
+            charge = "Plugged In"
+        } else {
+            charge = "On Battery"
+        }
         return config.power.chargeLimitEnabled
             ? "Limit \(config.power.chargeLimitPercent)% · \(charge)" : charge
     }
@@ -48,9 +54,10 @@ public final class BatteryModule: Module {
         var p = config.power
         p.chargeLimitEnabled = enabled
         p.chargeLimitPercent = percent
-        config.power = p   // setter clamps; read back the clamped value for the helper
-        return await power.setChargeLimit(enabled: config.power.chargeLimitEnabled,
-                                          percent: config.power.chargeLimitPercent)
+        config.power = p  // setter clamps; read back the clamped value for the helper
+        return await power.setChargeLimit(
+            enabled: config.power.chargeLimitEnabled,
+            percent: config.power.chargeLimitPercent)
     }
 
     /// Re-pushes the persisted limit to the helper. Called when the helper becomes
@@ -58,7 +65,7 @@ public final class BatteryModule: Module {
     /// so the app owns re-applying the user's persisted intent.
     @discardableResult
     public func reconcile() async -> String? {
-        guard config.power.chargeLimitEnabled else { return nil }   // nothing to re-apply
+        guard config.power.chargeLimitEnabled else { return nil }  // nothing to re-apply
         return await power.setChargeLimit(enabled: true, percent: config.power.chargeLimitPercent)
     }
 
@@ -66,7 +73,11 @@ public final class BatteryModule: Module {
         power.connect()
     }
 
-    public var tileView: AnyView { AnyView(StatTile(label: "Battery", headline: headline,
-                                                    subline: subline, icon: "battery.100")) }
+    public var tileView: AnyView {
+        AnyView(
+            StatTile(
+                label: "Battery", headline: headline,
+                subline: subline, icon: "battery.100"))
+    }
     public var barItemView: AnyView? { AnyView(BarLabel(icon: "battery.100", text: headline)) }
 }

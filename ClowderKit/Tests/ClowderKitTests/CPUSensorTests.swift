@@ -1,4 +1,5 @@
 import Testing
+
 @testable import ClowderKit
 
 struct CPUSensorTests {
@@ -19,17 +20,23 @@ struct CPUSensorTests {
 
     @Test func averagesAcrossCores() {
         var calc = CPULoadCalculator()
-        _ = calc.update(with: [CoreTicks(user: 0, system: 0, idle: 0, nice: 0),
-                               CoreTicks(user: 0, system: 0, idle: 0, nice: 0)])
-        let stats = calc.update(with: [CoreTicks(user: 100, system: 0, idle: 0, nice: 0),   // 100%
-                                       CoreTicks(user: 0, system: 0, idle: 100, nice: 0)])  // 0%
+        _ = calc.update(with: [
+            CoreTicks(user: 0, system: 0, idle: 0, nice: 0),
+            CoreTicks(user: 0, system: 0, idle: 0, nice: 0),
+        ])
+        let stats = calc.update(with: [
+            CoreTicks(user: 100, system: 0, idle: 0, nice: 0),  // 100%
+            CoreTicks(user: 0, system: 0, idle: 100, nice: 0),
+        ])  // 0%
         #expect(abs(stats!.totalLoad - 0.5) < 0.0001)
     }
 
     @Test func handlesCounterWraparound() {
         var calc = CPULoadCalculator()
         // Kernel tick counters are 32-bit and wrap.
-        _ = calc.update(with: [CoreTicks(user: UInt64(UInt32.max) - 10, system: 0, idle: 0, nice: 0)])
+        _ = calc.update(with: [
+            CoreTicks(user: UInt64(UInt32.max) - 10, system: 0, idle: 0, nice: 0)
+        ])
         let stats = calc.update(with: [CoreTicks(user: 10, system: 0, idle: 0, nice: 0)])
         // Wrapped delta = 21 busy ticks, 0 idle => 100% load, not negative garbage.
         #expect(stats!.perCore[0] == 1.0)
@@ -38,8 +45,11 @@ struct CPUSensorTests {
     @Test func coreCountChangeResets() {
         var calc = CPULoadCalculator()
         _ = calc.update(with: [CoreTicks(user: 0, system: 0, idle: 0, nice: 0)])
-        #expect(calc.update(with: [CoreTicks(user: 1, system: 0, idle: 0, nice: 0),
-                                   CoreTicks(user: 1, system: 0, idle: 0, nice: 0)]) == nil)
+        #expect(
+            calc.update(with: [
+                CoreTicks(user: 1, system: 0, idle: 0, nice: 0),
+                CoreTicks(user: 1, system: 0, idle: 0, nice: 0),
+            ]) == nil)
     }
 
     @Test func niceTicksCountAsBusy() {
@@ -67,7 +77,7 @@ struct CPUSensorTests {
         // +20 user, +10 nice (user side = 30), +10 system, +60 idle => total 100
         let stats = calc.update(with: [CoreTicks(user: 20, system: 10, idle: 60, nice: 10)])
         #expect(stats != nil)
-        #expect(abs(stats!.userLoad - 0.30) < 0.0001)    // (user+nice)/total
+        #expect(abs(stats!.userLoad - 0.30) < 0.0001)  // (user+nice)/total
         #expect(abs(stats!.systemLoad - 0.10) < 0.0001)
         #expect(abs(stats!.idleLoad - 0.60) < 0.0001)
         // totalLoad (busy) stays user+system+nice = 0.40

@@ -1,5 +1,6 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import ClowderKit
 
 @MainActor
@@ -62,12 +63,16 @@ struct ConfigStoreTests {
         let store = ConfigStore(defaults: defaults)
         var p = store.power
         p.chargeLimitEnabled = true
-        p.chargeLimitPercent = 30      // below floor → clamps to 50
+        p.chargeLimitPercent = 30  // below floor → clamps to 50
         store.power = p
         #expect(store.power.chargeLimitPercent == 50)
-        p = store.power; p.chargeLimitPercent = 101; store.power = p
+        p = store.power
+        p.chargeLimitPercent = 101
+        store.power = p
         #expect(store.power.chargeLimitPercent == 100)
-        p = store.power; p.fanMode = .curve; store.power = p
+        p = store.power
+        p.fanMode = .curve
+        store.power = p
 
         let reloaded = ConfigStore(defaults: defaults)
         #expect(reloaded.power.chargeLimitEnabled)
@@ -79,13 +84,15 @@ struct ConfigStoreTests {
         let (defaults, name) = freshDefaults()
         defer { UserDefaults().removePersistentDomain(forName: name) }
         // Legacy payload selecting a now-removed runner; other settings must survive.
-        let legacy = #"{"general":{"pollInterval":5,"character":"dog"},"modules":{"cpu":{"enabled":true,"promotedToBar":true}}}"#
+        let legacy =
+            #"{"general":{"pollInterval":5,"character":"dog"},"modules":{"cpu":{"enabled":true,"promotedToBar":true}}}"#
         defaults.set(legacy.data(using: .utf8), forKey: "clowder.config.v1")
         let store = ConfigStore(defaults: defaults)
-        #expect(store.general.pollInterval == 5)          // legacy data kept
-        #expect(store.general.character == .clowder)       // removed runner → clowder
-        #expect(store.power.chargeLimitPercent == 80)      // power falls back to defaults
-        #expect(store.config(for: .cpu).promotedToBar)     // non-default module setting survives the migration
+        #expect(store.general.pollInterval == 5)  // legacy data kept
+        #expect(store.general.character == .clowder)  // removed runner → clowder
+        #expect(store.power.chargeLimitPercent == 80)  // power falls back to defaults
+        // non-default module setting survives the migration
+        #expect(store.config(for: .cpu).promotedToBar)
     }
 
     /// Product decision: a fresh install shows only the CPU runner in the

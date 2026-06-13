@@ -19,5 +19,8 @@ public struct BatteryPoint: Equatable, Sendable, Identifiable {
     public let date: Date
     public let level: Int
     public var id: Date { date }
-    public init(date: Date, level: Int) { self.date = date; self.level = level }
+    public init(date: Date, level: Int) {
+        self.date = date
+        self.level = level
+    }
 }

@@ -11,9 +11,11 @@ private struct MiniChart: View {
         Chart {
             ForEach(series, id: \.name) { s in
                 ForEach(Array(s.values.enumerated()), id: \.offset) { i, v in
-                    LineMark(x: .value("t", i), y: .value(s.name, v),
-                             series: .value("series", s.name))
-                        .foregroundStyle(s.color)
+                    LineMark(
+                        x: .value("t", i), y: .value(s.name, v),
+                        series: .value("series", s.name)
+                    )
+                    .foregroundStyle(s.color)
                 }
             }
         }
@@ -50,12 +52,15 @@ struct CPUExpandedView: View {
     var body: some View {
         let h = module.history.elements
         VStack(alignment: .leading, spacing: 8) {
-            MiniChart(series: [
-                ("User", h.map(\.userLoad), .green),
-                ("System", h.map(\.systemLoad), .red),
-            ], yDomain: 0...1)
-            DetailRow(label: "System", value: Format.percent(module.stats?.systemLoad ?? 0), color: .red)
-            DetailRow(label: "User", value: Format.percent(module.stats?.userLoad ?? 0), color: .green)
+            MiniChart(
+                series: [
+                    ("User", h.map(\.userLoad), .green),
+                    ("System", h.map(\.systemLoad), .red),
+                ], yDomain: 0...1)
+            DetailRow(
+                label: "System", value: Format.percent(module.stats?.systemLoad ?? 0), color: .red)
+            DetailRow(
+                label: "User", value: Format.percent(module.stats?.userLoad ?? 0), color: .green)
             DetailRow(label: "Idle", value: Format.percent(module.stats?.idleLoad ?? 0))
         }
         .padding(12)
@@ -142,12 +147,14 @@ struct TempsExpandedView: View {
                             HStack {
                                 Text("Fan \(fan.id)").font(.caption)
                                 Spacer()
-                                Text("\(Int(fan.rpm.rounded())) RPM").font(.caption.monospacedDigit())
+                                Text("\(Int(fan.rpm.rounded())) RPM").font(
+                                    .caption.monospacedDigit())
                             }
                         }
                         // Spec: per-fan sliders live here in manual mode only.
                         if environment.config.power.fanMode == .manual,
-                           environment.helper.availability == .ready {
+                            environment.helper.availability == .ready
+                        {
                             Divider()
                             FanRPMSliders(config: environment.config, fans: module.fans)
                                 .font(.caption)

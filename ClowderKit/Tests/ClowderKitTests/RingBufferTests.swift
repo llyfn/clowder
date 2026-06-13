@@ -1,10 +1,13 @@
 import Testing
+
 @testable import ClowderKit
 
 struct RingBufferTests {
     @Test func appendsUpToCapacity() {
         var b = RingBuffer<Int>(capacity: 3)
-        b.append(1); b.append(2); b.append(3)
+        b.append(1)
+        b.append(2)
+        b.append(3)
         #expect(b.elements == [1, 2, 3])
     }
 

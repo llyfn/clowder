@@ -1,5 +1,6 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import HelperCore
 
 struct ChargeControlTests {
@@ -26,7 +27,8 @@ struct FanRulesTests {
     @Test func clampsToMaxAndRefusesBelowFloor() {
         #expect(FanRules.clampedTarget(7000, minRPM: 1200, maxRPM: 6800) == 6800)
         #expect(FanRules.clampedTarget(2000, minRPM: 1200, maxRPM: 6800) == 2000)
-        #expect(FanRules.clampedTarget(900, minRPM: 1200, maxRPM: 6800) == nil)   // safety floor refuses
+        // safety floor refuses
+        #expect(FanRules.clampedTarget(900, minRPM: 1200, maxRPM: 6800) == nil)
     }
 }
 
@@ -35,7 +37,9 @@ struct WatchdogTests {
         let t0 = Date(timeIntervalSinceReferenceDate: 0)
         #expect(WatchdogLogic.shouldRestoreFans(lastHeartbeat: t0, now: t0 + 91, fansManual: true))
         #expect(!WatchdogLogic.shouldRestoreFans(lastHeartbeat: t0, now: t0 + 89, fansManual: true))
-        #expect(!WatchdogLogic.shouldRestoreFans(lastHeartbeat: t0, now: t0 + 90, fansManual: true))  // boundary: strictly greater fires
-        #expect(!WatchdogLogic.shouldRestoreFans(lastHeartbeat: t0, now: t0 + 9_999, fansManual: false))
+        // boundary: strictly greater fires
+        #expect(!WatchdogLogic.shouldRestoreFans(lastHeartbeat: t0, now: t0 + 90, fansManual: true))
+        #expect(
+            !WatchdogLogic.shouldRestoreFans(lastHeartbeat: t0, now: t0 + 9_999, fansManual: false))
     }
 }

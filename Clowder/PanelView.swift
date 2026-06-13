@@ -15,30 +15,54 @@ struct PanelView: View {
             VStack(spacing: 10) {
                 if isEnabled(.cpu) || isEnabled(.temps) {
                     HStack(alignment: .top, spacing: 10) {
-                        if isEnabled(.cpu) { expandableTile(.cpu, collapsed: environment.cpu.tileView) }
-                        if isEnabled(.temps) { expandableTile(.temps, collapsed: environment.temps.tileView) }
+                        if isEnabled(.cpu) {
+                            expandableTile(.cpu, collapsed: environment.cpu.tileView)
+                        }
+                        if isEnabled(.temps) {
+                            expandableTile(.temps, collapsed: environment.temps.tileView)
+                        }
                     }
                 }
-                if expanded == .cpu, isEnabled(.cpu) { detailCard(AnyView(CPUExpandedView(module: environment.cpu))) }
-                if expanded == .temps, isEnabled(.temps) { detailCard(AnyView(TempsExpandedView(environment: environment))) }
+                if expanded == .cpu, isEnabled(.cpu) {
+                    detailCard(AnyView(CPUExpandedView(module: environment.cpu)))
+                }
+                if expanded == .temps, isEnabled(.temps) {
+                    detailCard(AnyView(TempsExpandedView(environment: environment)))
+                }
 
                 if isEnabled(.memory) || isEnabled(.network) {
                     HStack(alignment: .top, spacing: 10) {
-                        if isEnabled(.memory) { expandableTile(.memory, collapsed: environment.memory.tileView) }
-                        if isEnabled(.network) { expandableTile(.network, collapsed: environment.network.tileView) }
+                        if isEnabled(.memory) {
+                            expandableTile(.memory, collapsed: environment.memory.tileView)
+                        }
+                        if isEnabled(.network) {
+                            expandableTile(.network, collapsed: environment.network.tileView)
+                        }
                     }
                 }
-                if expanded == .memory, isEnabled(.memory) { detailCard(AnyView(MemoryExpandedView(module: environment.memory))) }
-                if expanded == .network, isEnabled(.network) { detailCard(AnyView(NetworkExpandedView(module: environment.network))) }
+                if expanded == .memory, isEnabled(.memory) {
+                    detailCard(AnyView(MemoryExpandedView(module: environment.memory)))
+                }
+                if expanded == .network, isEnabled(.network) {
+                    detailCard(AnyView(NetworkExpandedView(module: environment.network)))
+                }
 
                 if isEnabled(.disk) || isEnabled(.battery) {
                     HStack(alignment: .top, spacing: 10) {
-                        if isEnabled(.disk) { expandableTile(.disk, collapsed: environment.disk.tileView) }
-                        if isEnabled(.battery) { expandableTile(.battery, collapsed: environment.battery.tileView) }
+                        if isEnabled(.disk) {
+                            expandableTile(.disk, collapsed: environment.disk.tileView)
+                        }
+                        if isEnabled(.battery) {
+                            expandableTile(.battery, collapsed: environment.battery.tileView)
+                        }
                     }
                 }
-                if expanded == .disk, isEnabled(.disk) { detailCard(AnyView(StorageExpandedView(module: environment.disk))) }
-                if expanded == .battery, isEnabled(.battery) { detailCard(AnyView(BatteryExpandedView(module: environment.battery))) }
+                if expanded == .disk, isEnabled(.disk) {
+                    detailCard(AnyView(StorageExpandedView(module: environment.disk)))
+                }
+                if expanded == .battery, isEnabled(.battery) {
+                    detailCard(AnyView(BatteryExpandedView(module: environment.battery)))
+                }
 
                 if isEnabled(.keepAwake) { tile(environment.keepAwake.tileView) }
                 footer
@@ -79,13 +103,19 @@ struct PanelView: View {
 
     private var footer: some View {
         HStack {
-            Button { SettingsOpener.shared.open() } label: {
+            Button {
+                SettingsOpener.shared.open()
+            } label: {
                 Label("Settings", systemImage: "gearshape")
             }
             .buttonStyle(.plain)
             Spacer()
-            Button { NSApp.terminate(nil) } label: { Label("Quit", systemImage: "power") }
-                .buttonStyle(.plain)
+            Button {
+                NSApp.terminate(nil)
+            } label: {
+                Label("Quit", systemImage: "power")
+            }
+            .buttonStyle(.plain)
         }
         .font(.caption)
         .foregroundStyle(.secondary)

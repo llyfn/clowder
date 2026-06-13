@@ -36,8 +36,10 @@ final class HelperService: NSObject, ClowderHelperProtocol, @unchecked Sendable 
     // MARK: control loop (always on `queue`)
 
     private func controlTick() {
-        if WatchdogLogic.shouldRestoreFans(lastHeartbeat: lastHeartbeat, now: Date(),
-                                           fansManual: fansManual) {
+        if WatchdogLogic.shouldRestoreFans(
+            lastHeartbeat: lastHeartbeat, now: Date(),
+            fansManual: fansManual)
+        {
             _ = setFansAutoInternal()
         }
         chargeTick()
@@ -45,8 +47,10 @@ final class HelperService: NSObject, ClowderHelperProtocol, @unchecked Sendable 
 
     private func chargeTick() {
         guard chargeLimitEnabled, let level = BatteryLevel.read() else { return }
-        switch ChargeControl.action(level: level, target: chargeLimitPercent,
-                                    isInhibited: isInhibited) {
+        switch ChargeControl.action(
+            level: level, target: chargeLimitPercent,
+            isInhibited: isInhibited)
+        {
         case .inhibit: setInhibited(true)
         case .resume: setInhibited(false)
         case .none: break
@@ -67,12 +71,13 @@ final class HelperService: NSObject, ClowderHelperProtocol, @unchecked Sendable 
         guard let smc else { return "SMC unavailable" }
         guard let count = smc.readValue(SMCKey("FNum")), count > 0 else {
             fansManual = false
-            return nil   // fanless: auto is trivially true
+            return nil  // fanless: auto is trivially true
         }
         var failures: [String] = []
         for i in 0..<Int(count) {
-            do { try smc.writeBytes(SMCKey("F\(i)Md"), bytes: [0x00]) }
-            catch { failures.append("fan \(i): \(error)") }
+            do { try smc.writeBytes(SMCKey("F\(i)Md"), bytes: [0x00]) } catch {
+                failures.append("fan \(i): \(error)")
+            }
         }
         // Auto restore is best-effort: report failures but treat manual mode as exited
         // so the watchdog never re-fires for fans we can no longer control.
@@ -96,12 +101,13 @@ final class HelperService: NSObject, ClowderHelperProtocol, @unchecked Sendable 
         queue.async { [self] in
             guard smc != nil else { return reply("SMC unavailable") }
             chargeLimitEnabled = enabled
-            chargeLimitPercent = min(max(percent, HelperConstants.chargeLimitRange.lowerBound),
-                                     HelperConstants.chargeLimitRange.upperBound)
+            chargeLimitPercent = min(
+                max(percent, HelperConstants.chargeLimitRange.lowerBound),
+                HelperConstants.chargeLimitRange.upperBound)
             if enabled {
-                chargeTick()           // apply immediately, don't wait for the loop
+                chargeTick()  // apply immediately, don't wait for the loop
             } else {
-                setInhibited(false)    // disabling always resumes normal charging
+                setInhibited(false)  // disabling always resumes normal charging
             }
             reply(nil)
         }
@@ -126,8 +132,10 @@ final class HelperService: NSObject, ClowderHelperProtocol, @unchecked Sendable 
             for (i, rpm) in rpms.enumerated() {
                 let minRPM = smc.readValue(SMCKey("F\(i)Mn")) ?? 0
                 let maxRPM = smc.readValue(SMCKey("F\(i)Mx")) ?? .greatestFiniteMagnitude
-                guard let target = FanRules.clampedTarget(rpm, minRPM: minRPM, maxRPM: maxRPM) else {
-                    return reply("fan \(i): \(Int(rpm)) rpm is below the hardware minimum \(Int(minRPM))")
+                guard let target = FanRules.clampedTarget(rpm, minRPM: minRPM, maxRPM: maxRPM)
+                else {
+                    return reply(
+                        "fan \(i): \(Int(rpm)) rpm is below the hardware minimum \(Int(minRPM))")
                 }
                 clamped.append(target)
             }
@@ -145,7 +153,7 @@ final class HelperService: NSObject, ClowderHelperProtocol, @unchecked Sendable 
                 }
             }
             fansManual = true
-            lastHeartbeat = Date()   // a control action counts as liveness
+            lastHeartbeat = Date()  // a control action counts as liveness
             reply(nil)
         }
     }

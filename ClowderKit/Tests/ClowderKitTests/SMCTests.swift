@@ -1,12 +1,13 @@
 import Testing
+
 @testable import ClowderKit
 
 struct SMCTests {
     @Test func keyCodecRoundTrips() {
         let key = SMCKey("Tp01")
-        #expect(key.code == 0x54703031)
+        #expect(key.code == 0x5470_3031)
         #expect(key.string == "Tp01")
-        #expect(SMCKey(code: 0x464E756D).string == "FNum")
+        #expect(SMCKey(code: 0x464E_756D).string == "FNum")
     }
 
     @Test func decodesFlt() {
@@ -37,9 +38,9 @@ struct SMCTests {
 
     @Test func tempKeyFilterKeepsPlausibleCPUSensors() {
         #expect(TempsFansSource.isCPUTempKey("Tp01", celsius: 48))
-        #expect(TempsFansSource.isCPUTempKey("Tg0D", celsius: 52))   // GPU group included
+        #expect(TempsFansSource.isCPUTempKey("Tg0D", celsius: 52))  // GPU group included
         #expect(!TempsFansSource.isCPUTempKey("Ts0P", celsius: 30))  // other sensor groups excluded
-        #expect(!TempsFansSource.isCPUTempKey("Tp01", celsius: 0))   // implausible readings dropped
+        #expect(!TempsFansSource.isCPUTempKey("Tp01", celsius: 0))  // implausible readings dropped
         #expect(!TempsFansSource.isCPUTempKey("Tp01", celsius: 130))
     }
 

@@ -1,19 +1,23 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import ClowderKit
 
 struct NetworkSensorTests {
     @Test func firstSampleYieldsNil() {
         var calc = NetworkRateCalculator()
-        #expect(calc.update(with: NetworkCounters(inBytes: 100, outBytes: 100, date: Date())) == nil)
+        #expect(
+            calc.update(with: NetworkCounters(inBytes: 100, outBytes: 100, date: Date())) == nil)
     }
 
     @Test func computesRatesPerSecond() {
         var calc = NetworkRateCalculator()
         let t0 = Date(timeIntervalSinceReferenceDate: 0)
         _ = calc.update(with: NetworkCounters(inBytes: 1_000, outBytes: 500, date: t0))
-        let rates = calc.update(with: NetworkCounters(inBytes: 3_000, outBytes: 1_500,
-                                                      date: t0.addingTimeInterval(2)))
+        let rates = calc.update(
+            with: NetworkCounters(
+                inBytes: 3_000, outBytes: 1_500,
+                date: t0.addingTimeInterval(2)))
         #expect(rates == NetworkRates(downBytesPerSec: 1_000, upBytesPerSec: 500))
     }
 
@@ -22,8 +26,10 @@ struct NetworkSensorTests {
         let t0 = Date(timeIntervalSinceReferenceDate: 0)
         _ = calc.update(with: NetworkCounters(inBytes: 10_000, outBytes: 10_000, date: t0))
         // Aggregate counters dropped (interface reset) — never report negative.
-        let rates = calc.update(with: NetworkCounters(inBytes: 100, outBytes: 100,
-                                                      date: t0.addingTimeInterval(1)))
+        let rates = calc.update(
+            with: NetworkCounters(
+                inBytes: 100, outBytes: 100,
+                date: t0.addingTimeInterval(1)))
         #expect(rates == NetworkRates(downBytesPerSec: 0, upBytesPerSec: 0))
     }
 

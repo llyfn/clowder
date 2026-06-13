@@ -42,7 +42,8 @@ final class PromotedItemsController {
     private func sync() {
         for module in environment.allModules {
             let config = environment.config.config(for: module.id)
-            let wantsItem = config.enabled && config.promotedToBar
+            let wantsItem =
+                config.enabled && config.promotedToBar
                 && module.barItemView != nil
             if wantsItem, items[module.id] == nil {
                 let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)

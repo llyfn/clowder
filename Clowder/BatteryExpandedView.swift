@@ -31,22 +31,33 @@ struct BatteryExpandedView: View {
                 Spacer()
                 switch module.availability {
                 case .ready:
-                    Stepper("\(module.config.power.chargeLimitPercent)%",
-                            value: Binding(
-                                get: { module.config.power.chargeLimitPercent },
-                                set: { newValue in
-                                    Task { pendingError = await module.applyChargeLimit(
-                                        enabled: module.config.power.chargeLimitEnabled, percent: newValue) }
-                                }),
-                            in: 50...100, step: 5)
-                        .font(.caption).fixedSize()
-                    Toggle("", isOn: Binding(
-                        get: { module.config.power.chargeLimitEnabled },
-                        set: { on in
-                            Task { pendingError = await module.applyChargeLimit(
-                                enabled: on, percent: module.config.power.chargeLimitPercent) }
-                        }))
-                        .toggleStyle(.switch).labelsHidden()
+                    Stepper(
+                        "\(module.config.power.chargeLimitPercent)%",
+                        value: Binding(
+                            get: { module.config.power.chargeLimitPercent },
+                            set: { newValue in
+                                Task {
+                                    pendingError = await module.applyChargeLimit(
+                                        enabled: module.config.power.chargeLimitEnabled,
+                                        percent: newValue)
+                                }
+                            }),
+                        in: 50...100, step: 5
+                    )
+                    .font(.caption).fixedSize()
+                    Toggle(
+                        "",
+                        isOn: Binding(
+                            get: { module.config.power.chargeLimitEnabled },
+                            set: { on in
+                                Task {
+                                    pendingError = await module.applyChargeLimit(
+                                        enabled: on, percent: module.config.power.chargeLimitPercent
+                                    )
+                                }
+                            })
+                    )
+                    .toggleStyle(.switch).labelsHidden()
                 case .requiresApproval:
                     Button("Approve in System Settings") { module.requestHelper() }.font(.caption)
                 default:

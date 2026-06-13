@@ -45,7 +45,11 @@ private struct GeneralSettingsTab: View {
             LabeledContent("Update Every") {
                 Slider(value: $config.general.pollInterval, in: 1...10, step: 1) {
                     EmptyView()
-                } minimumValueLabel: { Text("1s") } maximumValueLabel: { Text("10s") }
+                } minimumValueLabel: {
+                    Text("1s")
+                } maximumValueLabel: {
+                    Text("10s")
+                }
                 .frame(width: 220)
             }
             Picker("Runner", selection: $config.general.character) {
@@ -86,18 +90,24 @@ private struct ModulesSettingsTab: View {
         environment.allModules.filter { $0.barItemView != nil }
     }
 
-    private func binding(_ keyPath: WritableKeyPath<ModuleConfig, Bool>, for id: ModuleID) -> Binding<Bool> {
+    private func binding(_ keyPath: WritableKeyPath<ModuleConfig, Bool>, for id: ModuleID)
+        -> Binding<Bool>
+    {
         let config = environment.config
         return Binding(
             get: { config.config(for: id)[keyPath: keyPath] },
-            set: { var c = config.config(for: id); c[keyPath: keyPath] = $0; config.setConfig(c, for: id) })
+            set: {
+                var c = config.config(for: id)
+                c[keyPath: keyPath] = $0
+                config.setConfig(c, for: id)
+            })
     }
 }
 
-private extension ModuleID {
+extension ModuleID {
     /// Title Case display names; raw values are lowercased identifiers
     /// (`keepAwake`.capitalized would render as "Keepawake").
-    var displayName: String {
+    fileprivate var displayName: String {
         switch self {
         case .cpu: "CPU"
         case .keepAwake: "Keep Awake"

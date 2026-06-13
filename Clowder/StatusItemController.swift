@@ -51,7 +51,8 @@ final class StatusItemController: NSObject {
         if let window = statusItem.button?.window {
             occlusionObserver = NotificationCenter.default.addObserver(
                 forName: NSWindow.didChangeOcclusionStateNotification,
-                object: window, queue: .main) { [weak self] _ in
+                object: window, queue: .main
+            ) { [weak self] _ in
                 Task { @MainActor in self?.retimeAnimation() }
             }
         }
@@ -86,7 +87,10 @@ final class StatusItemController: NSObject {
         let load = environment.store.snapshot.cpu?.totalLoad ?? 0
         let interval = FrameSequencer.interval(forLoad: load)
         if let timer = animationTimer,
-           abs(timer.timeInterval - interval) <= 0.01 { return }
+            abs(timer.timeInterval - interval) <= 0.01
+        {
+            return
+        }
         animationTimer?.invalidate()
         let t = Timer(timeInterval: interval, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.advanceFrame() }
@@ -116,14 +120,19 @@ final class StatusItemController: NSObject {
         if popover.isShown { popover.performClose(nil) }
         let menu = NSMenu()
         let awakeOn = environment.keepAwake.engine.state != .off
-        menu.addItem(withTitle: awakeOn ? "Turn Keep Awake Off" : "Keep Awake",
-                     action: #selector(toggleKeepAwake), keyEquivalent: "").target = self
+        menu.addItem(
+            withTitle: awakeOn ? "Turn Keep Awake Off" : "Keep Awake",
+            action: #selector(toggleKeepAwake), keyEquivalent: ""
+        ).target = self
         menu.addItem(.separator())
-        menu.addItem(withTitle: "Settings…", action: #selector(openSettings), keyEquivalent: ",").target = self
-        menu.addItem(withTitle: "Quit Clowder", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        menu.addItem(withTitle: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
+            .target = self
+        menu.addItem(
+            withTitle: "Quit Clowder", action: #selector(NSApplication.terminate(_:)),
+            keyEquivalent: "q")
         statusItem.menu = menu
         statusItem.button?.performClick(nil)
-        statusItem.menu = nil   // detach so left-click keeps opening the popover
+        statusItem.menu = nil  // detach so left-click keeps opening the popover
     }
 
     @objc private func toggleKeepAwake() {

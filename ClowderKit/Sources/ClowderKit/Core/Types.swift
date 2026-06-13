@@ -9,13 +9,15 @@ public enum RunnerCharacter: String, CaseIterable, Codable, Sendable {
 }
 
 public struct CPUStats: Equatable, Sendable {
-    public var totalLoad: Double      // 0...1, arithmetic mean of per-core busy fractions
-    public var perCore: [Double]      // 0...1 each
-    public var userLoad: Double       // 0...1, (user+nice)/total aggregated across cores
-    public var systemLoad: Double     // 0...1, system/total aggregated across cores
-    public var idleLoad: Double       // 0...1, idle/total aggregated across cores
-    public init(totalLoad: Double, perCore: [Double],
-                userLoad: Double = 0, systemLoad: Double = 0, idleLoad: Double = 0) {
+    public var totalLoad: Double  // 0...1, arithmetic mean of per-core busy fractions
+    public var perCore: [Double]  // 0...1 each
+    public var userLoad: Double  // 0...1, (user+nice)/total aggregated across cores
+    public var systemLoad: Double  // 0...1, system/total aggregated across cores
+    public var idleLoad: Double  // 0...1, idle/total aggregated across cores
+    public init(
+        totalLoad: Double, perCore: [Double],
+        userLoad: Double = 0, systemLoad: Double = 0, idleLoad: Double = 0
+    ) {
         self.totalLoad = totalLoad
         self.perCore = perCore
         self.userLoad = userLoad
@@ -33,8 +35,10 @@ public struct MemoryStats: Equatable, Sendable {
     public var appBytes: UInt64
     public var wiredBytes: UInt64
     public var compressedBytes: UInt64
-    public init(usedBytes: UInt64, totalBytes: UInt64, pressure: MemoryPressure,
-                appBytes: UInt64 = 0, wiredBytes: UInt64 = 0, compressedBytes: UInt64 = 0) {
+    public init(
+        usedBytes: UInt64, totalBytes: UInt64, pressure: MemoryPressure,
+        appBytes: UInt64 = 0, wiredBytes: UInt64 = 0, compressedBytes: UInt64 = 0
+    ) {
         self.usedBytes = usedBytes
         self.totalBytes = totalBytes
         self.pressure = pressure
@@ -76,12 +80,14 @@ public struct BatteryStats: Equatable, Sendable {
     public var isCharging: Bool
     public var isOnAC: Bool
     public init(levelPercent: Int, isCharging: Bool, isOnAC: Bool) {
-        self.levelPercent = levelPercent; self.isCharging = isCharging; self.isOnAC = isOnAC
+        self.levelPercent = levelPercent
+        self.isCharging = isCharging
+        self.isOnAC = isOnAC
     }
 }
 
 public struct TempReading: Equatable, Sendable, Identifiable {
-    public var id: String          // SMC key, e.g. "Tp01"
+    public var id: String  // SMC key, e.g. "Tp01"
     public var celsius: Double
     public init(id: String, celsius: Double) {
         self.id = id
@@ -115,11 +121,13 @@ public struct SensorSnapshot: Sendable {
     public var temps: [TempReading]
     public var fans: [FanReading]
 
-    public init(date: Date = Date(), cpu: CPUStats? = nil, memory: MemoryStats? = nil,
-                network: NetworkRates? = nil, disk: DiskStats? = nil,
-                diskIO: DiskIORates? = nil,
-                battery: BatteryStats? = nil,
-                temps: [TempReading] = [], fans: [FanReading] = []) {
+    public init(
+        date: Date = Date(), cpu: CPUStats? = nil, memory: MemoryStats? = nil,
+        network: NetworkRates? = nil, disk: DiskStats? = nil,
+        diskIO: DiskIORates? = nil,
+        battery: BatteryStats? = nil,
+        temps: [TempReading] = [], fans: [FanReading] = []
+    ) {
         self.date = date
         self.cpu = cpu
         self.memory = memory
@@ -131,4 +139,3 @@ public struct SensorSnapshot: Sendable {
         self.fans = fans
     }
 }
-

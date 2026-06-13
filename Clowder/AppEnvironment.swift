@@ -21,18 +21,23 @@ final class AppEnvironment {
     init() {
         config = ConfigStore()
         helper = HelperClient()
-        let tempsFans: any TempsFansProviding = (try? SMCClient()).map { TempsFansSource(smc: $0) }
+        let tempsFans: any TempsFansProviding =
+            (try? SMCClient()).map { TempsFansSource(smc: $0) }
             ?? UnavailableTempsFans()
-        store = SensorStore(sources: SensorSuite(
-            cpu: DarwinCPUSource(), memory: DarwinMemorySource(),
-            network: GetifaddrsNetworkSource(), disk: RootVolumeDiskSource(),
-            diskIO: IORegistryDiskIOSource(),
-            tempsFans: tempsFans, battery: IOPSBatterySource()))
+        store = SensorStore(
+            sources: SensorSuite(
+                cpu: DarwinCPUSource(), memory: DarwinMemorySource(),
+                network: GetifaddrsNetworkSource(), disk: RootVolumeDiskSource(),
+                diskIO: IORegistryDiskIOSource(),
+                tempsFans: tempsFans, battery: IOPSBatterySource()))
         fanControl = FanControlCoordinator(config: config, power: helper)
         battery = BatteryModule(config: config, power: helper)
         keepAwake = KeepAwakeModule(engine: KeepAwakeEngine(asserter: IOPMPowerAsserter()))
-        cpu = CPUModule(); temps = TempsModule(); memory = MemoryModule()
-        network = NetworkModule(); disk = DiskModule()
+        cpu = CPUModule()
+        temps = TempsModule()
+        memory = MemoryModule()
+        network = NetworkModule()
+        disk = DiskModule()
     }
 
     func refreshModules() {

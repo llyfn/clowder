@@ -15,9 +15,13 @@ public final class CPUModule: Module {
     }
 
     public var headline: String { stats.map { Format.percent($0.totalLoad) } ?? "—" }
-    public var tileView: AnyView { AnyView(StatTile(label: "CPU", headline: headline,
-                                                    subline: stats.map { "\($0.perCore.count) Cores" } ?? "",
-                                                    icon: "cpu")) }
+    public var tileView: AnyView {
+        AnyView(
+            StatTile(
+                label: "CPU", headline: headline,
+                subline: stats.map { "\($0.perCore.count) Cores" } ?? "",
+                icon: "cpu"))
+    }
     public var barItemView: AnyView? { AnyView(BarLabel(icon: "cpu", text: headline)) }
 }
 
@@ -38,11 +42,18 @@ public final class TempsModule: Module {
 
     public var headline: String { temps.map(\.celsius).max().map(Format.temp) ?? "—" }
     public var fanLine: String {
-        fans.isEmpty ? "No Fans" : fans.map { "\(Int($0.rpm.rounded())) RPM" }.joined(separator: " · ")
+        fans.isEmpty
+            ? "No Fans" : fans.map { "\(Int($0.rpm.rounded())) RPM" }.joined(separator: " · ")
     }
-    public var tileView: AnyView { AnyView(StatTile(label: "Temp", headline: headline,
-                                                    subline: fanLine, icon: "thermometer.medium")) }
-    public var barItemView: AnyView? { AnyView(BarLabel(icon: "thermometer.medium", text: headline)) }
+    public var tileView: AnyView {
+        AnyView(
+            StatTile(
+                label: "Temp", headline: headline,
+                subline: fanLine, icon: "thermometer.medium"))
+    }
+    public var barItemView: AnyView? {
+        AnyView(BarLabel(icon: "thermometer.medium", text: headline))
+    }
 }
 
 @Observable @MainActor
@@ -63,12 +74,16 @@ public final class MemoryModule: Module {
     public var appLine: String { stats.map { Format.bytes($0.appBytes) } ?? "—" }
     public var wiredLine: String { stats.map { Format.bytes($0.wiredBytes) } ?? "—" }
     public var compressedLine: String { stats.map { Format.bytes($0.compressedBytes) } ?? "—" }
-    public var tileView: AnyView { AnyView(StatTile(label: "Memory", headline: headline,
-                                                    subline: subline, icon: "memorychip")) }
+    public var tileView: AnyView {
+        AnyView(
+            StatTile(
+                label: "Memory", headline: headline,
+                subline: subline, icon: "memorychip"))
+    }
     public var barItemView: AnyView? { AnyView(BarLabel(icon: "memorychip", text: headline)) }
 }
 
-public extension MemoryPressure {
+extension MemoryPressure {
     /// Title Case for display; raw values are lowercased identifiers.
     public var displayName: String {
         switch self {
@@ -92,18 +107,25 @@ public final class NetworkModule: Module {
         if let r = snapshot.network { history.append(r) }
     }
 
-    public var downLine: String { rates.map { "↓ \(Format.byteRate($0.downBytesPerSec))" } ?? "↓ —" }
+    public var downLine: String {
+        rates.map { "↓ \(Format.byteRate($0.downBytesPerSec))" } ?? "↓ —"
+    }
     public var upLine: String { rates.map { "↑ \(Format.byteRate($0.upBytesPerSec))" } ?? "↑ —" }
-    public var tileView: AnyView { AnyView(StatTile(label: "Network", headline: downLine,
-                                                    subline: upLine, icon: "network")) }
+    public var tileView: AnyView {
+        AnyView(
+            StatTile(
+                label: "Network", headline: downLine,
+                subline: upLine, icon: "network"))
+    }
     public var barItemView: AnyView? {
-        AnyView(HStack(spacing: 2) {
-            Image(systemName: "network")
-            VStack(alignment: .trailing, spacing: 0) {
-                Text(downLine).font(.system(size: 9)).monospacedDigit()
-                Text(upLine).font(.system(size: 9)).monospacedDigit()
-            }
-        })
+        AnyView(
+            HStack(spacing: 2) {
+                Image(systemName: "network")
+                VStack(alignment: .trailing, spacing: 0) {
+                    Text(downLine).font(.system(size: 9)).monospacedDigit()
+                    Text(upLine).font(.system(size: 9)).monospacedDigit()
+                }
+            })
     }
 }
 
@@ -123,11 +145,19 @@ public final class DiskModule: Module {
     }
 
     public var headline: String { stats.map { "\(Format.bytes($0.freeBytes)) Free" } ?? "—" }
-    public var readLine: String { ioRates.map { "↓ \(Format.byteRate($0.readBytesPerSec))" } ?? "↓ —" }
-    public var writeLine: String { ioRates.map { "↑ \(Format.byteRate($0.writeBytesPerSec))" } ?? "↑ —" }
-    public var tileView: AnyView { AnyView(StatTile(label: "Storage", headline: headline,
-                                                    subline: stats.map { "of \(Format.bytes($0.totalBytes))" } ?? "",
-                                                    icon: "internaldrive")) }
+    public var readLine: String {
+        ioRates.map { "↓ \(Format.byteRate($0.readBytesPerSec))" } ?? "↓ —"
+    }
+    public var writeLine: String {
+        ioRates.map { "↑ \(Format.byteRate($0.writeBytesPerSec))" } ?? "↑ —"
+    }
+    public var tileView: AnyView {
+        AnyView(
+            StatTile(
+                label: "Storage", headline: headline,
+                subline: stats.map { "of \(Format.bytes($0.totalBytes))" } ?? "",
+                icon: "internaldrive"))
+    }
     public var barItemView: AnyView? { AnyView(BarLabel(icon: "internaldrive", text: headline)) }
 }
 

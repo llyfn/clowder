@@ -11,11 +11,18 @@ public struct SensorSuite: Sendable {
     public var tempsFans: any TempsFansProviding
     public var battery: any BatterySource
 
-    public init(cpu: any CPUSource, memory: any MemorySource, network: any NetworkSource,
-                disk: any DiskSource, diskIO: any DiskIOSource, tempsFans: any TempsFansProviding,
-                battery: any BatterySource) {
-        self.cpu = cpu; self.memory = memory; self.network = network
-        self.disk = disk; self.diskIO = diskIO; self.tempsFans = tempsFans; self.battery = battery
+    public init(
+        cpu: any CPUSource, memory: any MemorySource, network: any NetworkSource,
+        disk: any DiskSource, diskIO: any DiskIOSource, tempsFans: any TempsFansProviding,
+        battery: any BatterySource
+    ) {
+        self.cpu = cpu
+        self.memory = memory
+        self.network = network
+        self.disk = disk
+        self.diskIO = diskIO
+        self.tempsFans = tempsFans
+        self.battery = battery
     }
 }
 
@@ -69,8 +76,12 @@ public final class SensorStore {
         guard !isPaused else { return }
         var s = SensorSnapshot(date: Date())
         if let ticks = try? sources.cpu.sampleTicks() { s.cpu = cpuCalc.update(with: ticks) }
-        if let mem = try? sources.memory.sample() { s.memory = MemoryStatsCalculator.stats(from: mem) }
-        if let counters = try? sources.network.sampleCounters() { s.network = netCalc.update(with: counters) }
+        if let mem = try? sources.memory.sample() {
+            s.memory = MemoryStatsCalculator.stats(from: mem)
+        }
+        if let counters = try? sources.network.sampleCounters() {
+            s.network = netCalc.update(with: counters)
+        }
         s.disk = try? sources.disk.sample()
         if let c = try? sources.diskIO.sampleCounters() { s.diskIO = diskIOCalc.update(with: c) }
         s.battery = try? sources.battery.sample()

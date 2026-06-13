@@ -13,7 +13,8 @@ public struct RootVolumeDiskSource: DiskSource {
             .volumeAvailableCapacityForImportantUsageKey, .volumeTotalCapacityKey,
         ])
         guard let free = values.volumeAvailableCapacityForImportantUsage,
-              let total = values.volumeTotalCapacity else {
+            let total = values.volumeTotalCapacity
+        else {
             throw SensorError.readFailed("volume resourceValues")
         }
         guard free >= 0 else { throw SensorError.readFailed("negative available capacity") }
