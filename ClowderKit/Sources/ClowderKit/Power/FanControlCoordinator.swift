@@ -26,7 +26,7 @@ public final class FanControlCoordinator {
         guard !tickInFlight else { return }
         tickInFlight = true
         defer { tickInFlight = false }
-        guard !snapshot.fans.isEmpty else { return }   // fanless: nothing to control
+        guard !snapshot.fans.isEmpty else { return }  // fanless: nothing to control
         let mode = config.power.fanMode
 
         if mode != lastMode {
@@ -42,7 +42,9 @@ public final class FanControlCoordinator {
 
         // Safety rule: any sensor at/over the threshold while we control fans → back to auto.
         if let maxTemp = snapshot.temps.map(\.celsius).max(), maxTemp >= Self.overheatCelsius {
-            var p = config.power; p.fanMode = .auto; config.power = p
+            var p = config.power
+            p.fanMode = .auto
+            config.power = p
             lastError = await power.setFansAuto()
             lastMode = .auto
             return
@@ -59,7 +61,8 @@ public final class FanControlCoordinator {
                 curveEngine = FanCurveEngine(curve: config.power.curve)
             }
             guard let maxTemp = snapshot.temps.map(\.celsius).max(),
-                  let target = curveEngine?.evaluate(temp: maxTemp) else { return }
+                let target = curveEngine?.evaluate(temp: maxTemp)
+            else { return }
             await send(Array(repeating: target, count: snapshot.fans.count))
         case .auto:
             break

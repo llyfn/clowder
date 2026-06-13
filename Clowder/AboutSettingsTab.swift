@@ -5,7 +5,9 @@ struct AboutSettingsTab: View {
     private static let releasesURL = URL(string: "https://github.com/llyfn/clowder/releases")!
 
     private var version: String {
-        let short = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.0"
+        let short =
+            Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+            ?? "0.0"
         let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "0"
         return "\(short) (\(build))"
     }

@@ -10,14 +10,16 @@ public struct IOPSBatterySource: BatterySource {
 
     public func sample() throws -> BatteryStats {
         guard let blob = IOPSCopyPowerSourcesInfo()?.takeRetainedValue(),
-              let list = IOPSCopyPowerSourcesList(blob)?.takeRetainedValue() as? [CFTypeRef]
+            let list = IOPSCopyPowerSourcesList(blob)?.takeRetainedValue() as? [CFTypeRef]
         else { throw SensorError.readFailed("IOPSCopyPowerSourcesInfo") }
         for source in list {
             if let desc = IOPSGetPowerSourceDescription(blob, source)?
-                    .takeUnretainedValue() as? [String: Any],
-               let level = desc[kIOPSCurrentCapacityKey as String] as? Int {
+                .takeUnretainedValue() as? [String: Any],
+                let level = desc[kIOPSCurrentCapacityKey as String] as? Int
+            {
                 let charging = desc[kIOPSIsChargingKey as String] as? Bool ?? false
-                let onAC = (desc[kIOPSPowerSourceStateKey as String] as? String) == kIOPSACPowerValue
+                let onAC =
+                    (desc[kIOPSPowerSourceStateKey as String] as? String) == kIOPSACPowerValue
                 return BatteryStats(levelPercent: level, isCharging: charging, isOnAC: onAC)
             }
         }

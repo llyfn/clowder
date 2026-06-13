@@ -1,5 +1,6 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import ClowderKit
 
 // Deterministic: user ticks increment by 1_000 per call, so load is always computable.
@@ -15,7 +16,7 @@ private struct FailingCPU: CPUSource {
 }
 private struct FakeMemory: MemorySource {
     func sample() throws -> MemorySample {
-        MemorySample(activeBytes: 1, wiredBytes: 1, compressedBytes: 1, totalBytes: 10)
+        MemorySample(appBytes: 1, wiredBytes: 1, compressedBytes: 1, totalBytes: 10)
     }
 }
 private struct FakeNetwork: NetworkSource {
@@ -31,15 +32,25 @@ private struct FakeTempsFans: TempsFansProviding {
     func sampleFans() -> [FanReading] { [] }
 }
 private struct FakeBattery: BatterySource {
-    func sample() throws -> BatteryStats { BatteryStats(levelPercent: 76, isCharging: true, isOnAC: true) }
+    func sample() throws -> BatteryStats {
+        BatteryStats(levelPercent: 76, isCharging: true, isOnAC: true)
+    }
+}
+private struct StubDiskIO: DiskIOSource {
+    func sampleCounters() throws -> DiskIOCounters {
+        DiskIOCounters(readBytes: 0, writeBytes: 0, date: Date())
+    }
 }
 
 @MainActor
 struct SensorStoreTests {
     private func makeStore(cpu: any CPUSource = FakeCPU()) -> SensorStore {
-        SensorStore(sources: SensorSuite(cpu: cpu, memory: FakeMemory(),
-                                         network: FakeNetwork(), disk: FakeDisk(),
-                                         tempsFans: FakeTempsFans(), battery: FakeBattery()))
+        SensorStore(
+            sources: SensorSuite(
+                cpu: cpu, memory: FakeMemory(),
+                network: FakeNetwork(), disk: FakeDisk(),
+                diskIO: StubDiskIO(),
+                tempsFans: FakeTempsFans(), battery: FakeBattery()))
     }
 
     @Test func tickProducesSnapshot() {
@@ -49,6 +60,7 @@ struct SensorStoreTests {
         #expect(store.snapshot.cpu != nil)
         #expect(store.snapshot.memory?.usedBytes == 3)
         #expect(store.snapshot.disk?.freeBytes == 5)
+        #expect(store.snapshot.diskIO != nil)
         #expect(store.snapshot.temps.first?.celsius == 48)
         #expect(store.snapshot.battery?.levelPercent == 76)
     }
@@ -57,8 +69,8 @@ struct SensorStoreTests {
         let store = makeStore(cpu: FailingCPU())
         store.tick()
         store.tick()
-        #expect(store.snapshot.cpu == nil)        // failed source
-        #expect(store.snapshot.memory != nil)     // others unaffected
+        #expect(store.snapshot.cpu == nil)  // failed source
+        #expect(store.snapshot.memory != nil)  // others unaffected
     }
 
     @Test func pauseStopsTickingAndResumeRestarts() {
@@ -66,7 +78,7 @@ struct SensorStoreTests {
         store.tick()
         store.pause()
         let dateWhilePaused = store.snapshot.date
-        store.tick()   // ignored while paused
+        store.tick()  // ignored while paused
         #expect(store.snapshot.date == dateWhilePaused)
         store.resume()
         store.tick()

@@ -44,17 +44,29 @@ struct PowerSettingsTab: View {
 
     private var chargeSection: some View {
         Section("Battery") {
-            Toggle("Limit Charging", isOn: Binding(
-                get: { config.power.chargeLimitEnabled },
-                set: { on in Task { _ = await environment.battery.applyChargeLimit(
-                    enabled: on, percent: config.power.chargeLimitPercent) } }))
-            Stepper("Charge Limit: \(config.power.chargeLimitPercent)%",
-                    value: Binding(
-                        get: { config.power.chargeLimitPercent },
-                        set: { v in Task { _ = await environment.battery.applyChargeLimit(
-                            enabled: config.power.chargeLimitEnabled, percent: v) } }),
-                    in: 50...100, step: 5)
-                .disabled(!config.power.chargeLimitEnabled)
+            Toggle(
+                "Limit Charging",
+                isOn: Binding(
+                    get: { config.power.chargeLimitEnabled },
+                    set: { on in
+                        Task {
+                            _ = await environment.battery.applyChargeLimit(
+                                enabled: on, percent: config.power.chargeLimitPercent)
+                        }
+                    }))
+            Stepper(
+                "Charge Limit: \(config.power.chargeLimitPercent)%",
+                value: Binding(
+                    get: { config.power.chargeLimitPercent },
+                    set: { v in
+                        Task {
+                            _ = await environment.battery.applyChargeLimit(
+                                enabled: config.power.chargeLimitEnabled, percent: v)
+                        }
+                    }),
+                in: 50...100, step: 5
+            )
+            .disabled(!config.power.chargeLimitEnabled)
         }
         .disabled(environment.helper.availability != .ready)
     }
@@ -65,9 +77,16 @@ struct PowerSettingsTab: View {
             if environment.store.snapshot.fans.isEmpty {
                 Text("No fans on this Mac").foregroundStyle(.secondary)
             } else {
-                Picker("Mode", selection: Binding(
-                    get: { config.power.fanMode },
-                    set: { mode in var p = config.power; p.fanMode = mode; config.power = p })) {
+                Picker(
+                    "Mode",
+                    selection: Binding(
+                        get: { config.power.fanMode },
+                        set: { mode in
+                            var p = config.power
+                            p.fanMode = mode
+                            config.power = p
+                        })
+                ) {
                     ForEach(FanControlMode.allCases, id: \.self) { mode in
                         Text(mode.rawValue.capitalized).tag(mode)
                     }
@@ -99,11 +118,15 @@ private struct CurveEditor: View {
         ForEach(config.power.curve.points.indices, id: \.self) { i in
             let point = i < config.power.curve.points.count ? config.power.curve.points[i] : nil
             HStack {
-                Stepper(point.map { "\(Int($0.celsius)) °C" } ?? "—",
-                        value: bindingFor(i, \.celsius), in: 30...110, step: 5)
-                Stepper(point.map { "\(Int($0.rpm)) RPM" } ?? "—",
-                        value: bindingFor(i, \.rpm), in: 1000...7000, step: 250)
-                Button(role: .destructive) { removePoint(i) } label: {
+                Stepper(
+                    point.map { "\(Int($0.celsius)) °C" } ?? "—",
+                    value: bindingFor(i, \.celsius), in: 30...110, step: 5)
+                Stepper(
+                    point.map { "\(Int($0.rpm)) RPM" } ?? "—",
+                    value: bindingFor(i, \.rpm), in: 1000...7000, step: 250)
+                Button(role: .destructive) {
+                    removePoint(i)
+                } label: {
                     Image(systemName: "minus.circle")
                 }
                 .buttonStyle(.plain)
@@ -117,11 +140,15 @@ private struct CurveEditor: View {
             points.append(CurvePoint(celsius: 100, rpm: 6500))
             p.curve = FanCurve(points: points)
             config.power = p
-        } label: { Label("Add Point", systemImage: "plus.circle") }
+        } label: {
+            Label("Add Point", systemImage: "plus.circle")
+        }
         .disabled(config.power.curve.points.count >= 5)
     }
 
-    private func bindingFor(_ index: Int, _ keyPath: WritableKeyPath<CurvePoint, Double>) -> Binding<Double> {
+    private func bindingFor(_ index: Int, _ keyPath: WritableKeyPath<CurvePoint, Double>)
+        -> Binding<Double>
+    {
         Binding(
             get: {
                 guard index < config.power.curve.points.count else { return 0 }
@@ -131,10 +158,11 @@ private struct CurveEditor: View {
                 var p = config.power
                 var points = p.curve.points
                 guard index < points.count else { return }
-                let existing = Set(points.indices.filter { $0 != index }.map { Int(points[$0].celsius) })
+                let existing = Set(
+                    points.indices.filter { $0 != index }.map { Int(points[$0].celsius) })
                 if keyPath == \CurvePoint.celsius, existing.contains(Int(value)) { return }
                 points[index][keyPath: keyPath] = value
-                p.curve = FanCurve(points: points)   // re-sorts by temperature
+                p.curve = FanCurve(points: points)  // re-sorts by temperature
                 config.power = p
             })
     }

@@ -1,5 +1,6 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import ClowderKit
 
 @MainActor
@@ -25,14 +26,14 @@ struct ConfigStoreTests {
         defer { UserDefaults().removePersistentDomain(forName: name) }
         let store = ConfigStore(defaults: defaults)
         store.general.pollInterval = 5
-        store.general.character = .rocket
+        store.general.character = .cat
         var temps = store.config(for: .temps)
         temps.promotedToBar = true
         store.setConfig(temps, for: .temps)
 
         let reloaded = ConfigStore(defaults: defaults)
         #expect(reloaded.general.pollInterval == 5)
-        #expect(reloaded.general.character == .rocket)
+        #expect(reloaded.general.character == .cat)
         #expect(reloaded.config(for: .temps).promotedToBar)
     }
 
@@ -62,12 +63,16 @@ struct ConfigStoreTests {
         let store = ConfigStore(defaults: defaults)
         var p = store.power
         p.chargeLimitEnabled = true
-        p.chargeLimitPercent = 30      // below floor → clamps to 50
+        p.chargeLimitPercent = 30  // below floor → clamps to 50
         store.power = p
         #expect(store.power.chargeLimitPercent == 50)
-        p = store.power; p.chargeLimitPercent = 101; store.power = p
+        p = store.power
+        p.chargeLimitPercent = 101
+        store.power = p
         #expect(store.power.chargeLimitPercent == 100)
-        p = store.power; p.fanMode = .curve; store.power = p
+        p = store.power
+        p.fanMode = .curve
+        store.power = p
 
         let reloaded = ConfigStore(defaults: defaults)
         #expect(reloaded.power.chargeLimitEnabled)
@@ -75,15 +80,19 @@ struct ConfigStoreTests {
         #expect(reloaded.power.fanMode == .curve)
     }
 
-    @Test func oldConfigWithoutPowerStillDecodes() {
+    @Test func removedRunnerCharacterFallsBackToClowder() {
         let (defaults, name) = freshDefaults()
         defer { UserDefaults().removePersistentDomain(forName: name) }
-        // Simulate a Plan-1-era payload with no "power" key.
-        let legacy = #"{"general":{"pollInterval":5,"character":"dog"},"modules":{}}"#
+        // Legacy payload selecting a now-removed runner; other settings must survive.
+        let legacy =
+            #"{"general":{"pollInterval":5,"character":"dog"},"modules":{"cpu":{"enabled":true,"promotedToBar":true}}}"#
         defaults.set(legacy.data(using: .utf8), forKey: "clowder.config.v1")
         let store = ConfigStore(defaults: defaults)
-        #expect(store.general.pollInterval == 5)          // legacy data kept
-        #expect(store.power.chargeLimitPercent == 80)     // power falls back to defaults
+        #expect(store.general.pollInterval == 5)  // legacy data kept
+        #expect(store.general.character == .clowder)  // removed runner → clowder
+        #expect(store.power.chargeLimitPercent == 80)  // power falls back to defaults
+        // non-default module setting survives the migration
+        #expect(store.config(for: .cpu).promotedToBar)
     }
 
     /// Product decision: a fresh install shows only the CPU runner in the

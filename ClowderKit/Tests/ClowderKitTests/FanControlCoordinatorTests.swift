@@ -1,5 +1,6 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import ClowderKit
 
 @MainActor
@@ -9,18 +10,28 @@ private final class RecordingPower: PowerControlling {
     var targetCalls: [[Double]] = []
     func connect() {}
     func setChargeLimit(enabled: Bool, percent: Int) async -> String? { nil }
-    func setFansAuto() async -> String? { autoCalls += 1; return nil }
-    func setFanTargets(_ rpms: [Double]) async -> String? { targetCalls.append(rpms); return nil }
+    func setFansAuto() async -> String? {
+        autoCalls += 1
+        return nil
+    }
+    func setFanTargets(_ rpms: [Double]) async -> String? {
+        targetCalls.append(rpms)
+        return nil
+    }
 }
 
 @MainActor
 struct FanControlCoordinatorTests {
-    private func make(mode: FanControlMode) -> (FanControlCoordinator, ConfigStore, RecordingPower) {
+    private func make(mode: FanControlMode) -> (FanControlCoordinator, ConfigStore, RecordingPower)
+    {
         let defaults = UserDefaults(suiteName: "test.fans.\(UUID().uuidString)")!
         let config = ConfigStore(defaults: defaults)
-        var p = config.power; p.fanMode = mode
-        p.curve = FanCurve(points: [CurvePoint(celsius: 50, rpm: 1500),
-                                    CurvePoint(celsius: 90, rpm: 6000)])
+        var p = config.power
+        p.fanMode = mode
+        p.curve = FanCurve(points: [
+            CurvePoint(celsius: 50, rpm: 1500),
+            CurvePoint(celsius: 90, rpm: 6000),
+        ])
         config.power = p
         let power = RecordingPower()
         return (FanControlCoordinator(config: config, power: power), config, power)
@@ -41,7 +52,7 @@ struct FanControlCoordinatorTests {
     @Test func curveModeHysteresisSuppressesRepeats() async {
         let (coordinator, _, power) = make(mode: .curve)
         await coordinator.tick(snapshot(maxTemp: 70))
-        await coordinator.tick(snapshot(maxTemp: 71))   // |Δ| < 3
+        await coordinator.tick(snapshot(maxTemp: 71))  // |Δ| < 3
         #expect(power.targetCalls.count == 1)
     }
 
@@ -66,9 +77,11 @@ struct FanControlCoordinatorTests {
 
     @Test func manualModeSendsConfiguredTargetsOnce() async {
         let (coordinator, config, power) = make(mode: .manual)
-        var p = config.power; p.manualRPMs = [0: 2500]; config.power = p
+        var p = config.power
+        p.manualRPMs = [0: 2500]
+        config.power = p
         await coordinator.tick(snapshot(maxTemp: 70))
         await coordinator.tick(snapshot(maxTemp: 70))
-        #expect(power.targetCalls == [[2500]])   // unchanged targets are not re-sent
+        #expect(power.targetCalls == [[2500]])  // unchanged targets are not re-sent
     }
 }

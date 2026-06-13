@@ -7,14 +7,22 @@ public struct SensorSuite: Sendable {
     public var memory: any MemorySource
     public var network: any NetworkSource
     public var disk: any DiskSource
+    public var diskIO: any DiskIOSource
     public var tempsFans: any TempsFansProviding
     public var battery: any BatterySource
 
-    public init(cpu: any CPUSource, memory: any MemorySource, network: any NetworkSource,
-                disk: any DiskSource, tempsFans: any TempsFansProviding,
-                battery: any BatterySource) {
-        self.cpu = cpu; self.memory = memory; self.network = network
-        self.disk = disk; self.tempsFans = tempsFans; self.battery = battery
+    public init(
+        cpu: any CPUSource, memory: any MemorySource, network: any NetworkSource,
+        disk: any DiskSource, diskIO: any DiskIOSource, tempsFans: any TempsFansProviding,
+        battery: any BatterySource
+    ) {
+        self.cpu = cpu
+        self.memory = memory
+        self.network = network
+        self.disk = disk
+        self.diskIO = diskIO
+        self.tempsFans = tempsFans
+        self.battery = battery
     }
 }
 
@@ -26,6 +34,7 @@ public final class SensorStore {
     @ObservationIgnored private let sources: SensorSuite
     @ObservationIgnored private var cpuCalc = CPULoadCalculator()
     @ObservationIgnored private var netCalc = NetworkRateCalculator()
+    @ObservationIgnored private var diskIOCalc = DiskIORateCalculator()
     // nonisolated(unsafe) lets deinit (which is nonisolated in Swift 6) reach the timer.
     // All writes happen on MainActor; deinit is the sole non-isolated reader.
     @ObservationIgnored nonisolated(unsafe) private var timer: Timer?
@@ -67,9 +76,14 @@ public final class SensorStore {
         guard !isPaused else { return }
         var s = SensorSnapshot(date: Date())
         if let ticks = try? sources.cpu.sampleTicks() { s.cpu = cpuCalc.update(with: ticks) }
-        if let mem = try? sources.memory.sample() { s.memory = MemoryStatsCalculator.stats(from: mem) }
-        if let counters = try? sources.network.sampleCounters() { s.network = netCalc.update(with: counters) }
+        if let mem = try? sources.memory.sample() {
+            s.memory = MemoryStatsCalculator.stats(from: mem)
+        }
+        if let counters = try? sources.network.sampleCounters() {
+            s.network = netCalc.update(with: counters)
+        }
         s.disk = try? sources.disk.sample()
+        if let c = try? sources.diskIO.sampleCounters() { s.diskIO = diskIOCalc.update(with: c) }
         s.battery = try? sources.battery.sample()
         s.temps = sources.tempsFans.sampleTemps()
         s.fans = sources.tempsFans.sampleFans()

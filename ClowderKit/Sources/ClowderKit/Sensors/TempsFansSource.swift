@@ -21,8 +21,8 @@ public final class TempsFansSource: TempsFansProviding, @unchecked Sendable {
     /// "Tp" = P-cores, "Tg" = GPU cluster, "Te" = E-cores, "Th" = high-efficiency cluster.
     /// A reading outside (0, 120)°C is a non-thermal or broken key — drop it.
     public static func isCPUTempKey(_ key: String, celsius: Double) -> Bool {
-        (key.hasPrefix("Tp") || key.hasPrefix("Tg") ||
-         key.hasPrefix("Te") || key.hasPrefix("Th")) && celsius > 0 && celsius < 120
+        (key.hasPrefix("Tp") || key.hasPrefix("Tg") || key.hasPrefix("Te") || key.hasPrefix("Th"))
+            && celsius > 0 && celsius < 120
     }
 
     private static let tempPrefixes = ["Tp", "Tg", "Te", "Th"]
@@ -34,11 +34,12 @@ public final class TempsFansSource: TempsFansProviding, @unchecked Sendable {
         var entries: [(key: SMCKey, info: SMCKeyInfo)] = []
         for index in 0..<count {
             guard let key = try? smc.key(atIndex: index),
-                  Self.tempPrefixes.contains(where: { key.string.hasPrefix($0) }),
-                  let info = try? smc.keyInfo(key), info.dataSize > 0,
-                  let bytes = try? smc.readBytes(key, info: info),
-                  let value = SMCValueDecoder.decode(type: info.dataType, bytes: bytes),
-                  Self.isCPUTempKey(key.string, celsius: value) else { continue }
+                Self.tempPrefixes.contains(where: { key.string.hasPrefix($0) }),
+                let info = try? smc.keyInfo(key), info.dataSize > 0,
+                let bytes = try? smc.readBytes(key, info: info),
+                let value = SMCValueDecoder.decode(type: info.dataType, bytes: bytes),
+                Self.isCPUTempKey(key.string, celsius: value)
+            else { continue }
             entries.append((key: key, info: info))
         }
         return entries
@@ -47,8 +48,9 @@ public final class TempsFansSource: TempsFansProviding, @unchecked Sendable {
     public func sampleTemps() -> [TempReading] {
         tempEntries.compactMap { entry in
             guard let bytes = try? smc.readBytes(entry.key, info: entry.info),
-                  let v = SMCValueDecoder.decode(type: entry.info.dataType, bytes: bytes),
-                  Self.isCPUTempKey(entry.key.string, celsius: v) else { return nil }
+                let v = SMCValueDecoder.decode(type: entry.info.dataType, bytes: bytes),
+                Self.isCPUTempKey(entry.key.string, celsius: v)
+            else { return nil }
             return TempReading(id: entry.key.string, celsius: v)
         }
     }

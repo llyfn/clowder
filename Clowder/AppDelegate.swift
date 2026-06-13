@@ -20,14 +20,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Pause polling while the machine sleeps.
         let store = environment.store
         let center = NSWorkspace.shared.notificationCenter
-        sleepObservers.append(center.addObserver(
-            forName: NSWorkspace.willSleepNotification, object: nil, queue: .main) { _ in
-            Task { @MainActor in store.pause() }
-        })
-        sleepObservers.append(center.addObserver(
-            forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { _ in
-            Task { @MainActor in store.resume() }
-        })
+        sleepObservers.append(
+            center.addObserver(
+                forName: NSWorkspace.willSleepNotification, object: nil, queue: .main
+            ) { _ in
+                Task { @MainActor in store.pause() }
+            })
+        sleepObservers.append(
+            center.addObserver(
+                forName: NSWorkspace.didWakeNotification, object: nil, queue: .main
+            ) { _ in
+                Task { @MainActor in store.resume() }
+            })
 
         configObservationTask = Task { [weak self] in
             while let self, !Task.isCancelled {

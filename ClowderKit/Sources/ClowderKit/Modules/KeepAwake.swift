@@ -30,7 +30,7 @@ public final class IOPMPowerAsserter: PowerAsserting {
 
 public enum KeepAwakeState: Equatable, Sendable {
     case off
-    case on(until: Date?)   // nil = indefinitely
+    case on(until: Date?)  // nil = indefinitely
 }
 
 @Observable @MainActor
@@ -104,7 +104,9 @@ struct KeepAwakeTile: View {
 
     var body: some View {
         HStack {
-            Label("Keep Awake", systemImage: module.engine.state == .off ? "cup.and.saucer" : "cup.and.saucer.fill")
+            Label(
+                "Keep Awake",
+                systemImage: module.engine.state == .off ? "cup.and.saucer" : "cup.and.saucer.fill")
             if let remaining = module.engine.remaining {
                 Text(Duration.seconds(remaining).formatted(.time(pattern: .hourMinute)))
                     .foregroundStyle(.secondary).font(.caption)
@@ -114,12 +116,17 @@ struct KeepAwakeTile: View {
                 Button("15 Minutes") { module.engine.enable(for: 15 * 60) }
                 Button("1 Hour") { module.engine.enable(for: 60 * 60) }
                 Button("Until Turned Off") { module.engine.enable(for: nil) }
-            } label: { Image(systemName: "timer") }
+            } label: {
+                Image(systemName: "timer")
+            }
             .menuStyle(.borderlessButton).fixedSize()
-            Toggle("", isOn: Binding(
-                get: { module.engine.state != .off },
-                set: { $0 ? module.engine.enable(for: nil) : module.engine.disable() }
-            )).toggleStyle(.switch).labelsHidden()
+            Toggle(
+                "",
+                isOn: Binding(
+                    get: { module.engine.state != .off },
+                    set: { $0 ? module.engine.enable(for: nil) : module.engine.disable() }
+                )
+            ).toggleStyle(.switch).labelsHidden()
         }
         .padding(12)
     }

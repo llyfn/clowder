@@ -29,18 +29,42 @@ struct PanelView: View {
                 if expanded == .temps, isEnabled(.temps) {
                     detailCard(AnyView(TempsExpandedView(environment: environment)))
                 }
-                if isEnabled(.memory) || isEnabled(.network) || isEnabled(.disk) {
+
+                if isEnabled(.memory) || isEnabled(.network) {
                     HStack(alignment: .top, spacing: 10) {
-                        if isEnabled(.memory) { tile(environment.memory.tileView) }
+                        if isEnabled(.memory) {
+                            expandableTile(.memory, collapsed: environment.memory.tileView)
+                        }
                         if isEnabled(.network) {
-                            tile(networkDiskTile)
-                        } else if isEnabled(.disk) {
-                            tile(environment.disk.tileView)
+                            expandableTile(.network, collapsed: environment.network.tileView)
                         }
                     }
                 }
+                if expanded == .memory, isEnabled(.memory) {
+                    detailCard(AnyView(MemoryExpandedView(module: environment.memory)))
+                }
+                if expanded == .network, isEnabled(.network) {
+                    detailCard(AnyView(NetworkExpandedView(module: environment.network)))
+                }
+
+                if isEnabled(.disk) || isEnabled(.battery) {
+                    HStack(alignment: .top, spacing: 10) {
+                        if isEnabled(.disk) {
+                            expandableTile(.disk, collapsed: environment.disk.tileView)
+                        }
+                        if isEnabled(.battery) {
+                            expandableTile(.battery, collapsed: environment.battery.tileView)
+                        }
+                    }
+                }
+                if expanded == .disk, isEnabled(.disk) {
+                    detailCard(AnyView(StorageExpandedView(module: environment.disk)))
+                }
+                if expanded == .battery, isEnabled(.battery) {
+                    detailCard(AnyView(BatteryExpandedView(module: environment.battery)))
+                }
+
                 if isEnabled(.keepAwake) { tile(environment.keepAwake.tileView) }
-                if isEnabled(.battery) { tile(environment.battery.tileView) }
                 footer
             }
             .padding(12)
@@ -55,23 +79,6 @@ struct PanelView: View {
 
     private func isEnabled(_ id: ModuleID) -> Bool {
         environment.config.config(for: id).enabled
-    }
-
-    /// Network tile carries the disk subline, per the approved panel design —
-    /// unless disk is disabled.
-    private var networkDiskTile: AnyView {
-        let subline = isEnabled(.disk)
-            ? "\(environment.network.upLine) · \(environment.disk.headline)"
-            : environment.network.upLine
-        return AnyView(VStack(alignment: .leading, spacing: 2) {
-            Label("Network", systemImage: "network")
-                .font(.caption2).foregroundStyle(.secondary)
-            Text(environment.network.downLine).font(.title3.weight(.semibold)).monospacedDigit()
-            Text(subline)
-                .font(.caption).foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12))
     }
 
     private func tile(_ content: AnyView) -> some View {
@@ -96,13 +103,19 @@ struct PanelView: View {
 
     private var footer: some View {
         HStack {
-            Button { SettingsOpener.shared.open() } label: {
+            Button {
+                SettingsOpener.shared.open()
+            } label: {
                 Label("Settings", systemImage: "gearshape")
             }
             .buttonStyle(.plain)
             Spacer()
-            Button { NSApp.terminate(nil) } label: { Label("Quit", systemImage: "power") }
-                .buttonStyle(.plain)
+            Button {
+                NSApp.terminate(nil)
+            } label: {
+                Label("Quit", systemImage: "power")
+            }
+            .buttonStyle(.plain)
         }
         .font(.caption)
         .foregroundStyle(.secondary)

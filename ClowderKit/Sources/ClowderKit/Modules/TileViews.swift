@@ -8,7 +8,10 @@ public struct StatTile: View {
     let icon: String
 
     public init(label: String, headline: String, subline: String, icon: String) {
-        self.label = label; self.headline = headline; self.subline = subline; self.icon = icon
+        self.label = label
+        self.headline = headline
+        self.subline = subline
+        self.icon = icon
     }
 
     public var body: some View {

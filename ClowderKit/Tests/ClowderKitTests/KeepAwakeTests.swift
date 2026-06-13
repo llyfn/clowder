@@ -1,5 +1,6 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import ClowderKit
 
 @MainActor
@@ -28,7 +29,7 @@ struct KeepAwakeTests {
         #expect(asserter.active != nil)
         now += 100_000
         engine.tick()
-        #expect(engine.state == .on(until: nil))   // never expires
+        #expect(engine.state == .on(until: nil))  // never expires
     }
 
     @Test func timedEnableExpiresViaTick() {
@@ -39,11 +40,11 @@ struct KeepAwakeTests {
         #expect(engine.state == .on(until: Date(timeIntervalSinceReferenceDate: 900)))
         now = Date(timeIntervalSinceReferenceDate: 899)
         engine.tick()
-        #expect(asserter.active != nil)            // still on at t=899
+        #expect(asserter.active != nil)  // still on at t=899
         now = Date(timeIntervalSinceReferenceDate: 900)
         engine.tick()
         #expect(engine.state == .off)
-        #expect(asserter.active == nil)            // assertion released at exact boundary
+        #expect(asserter.active == nil)  // assertion released at exact boundary
     }
 
     @Test func disableReleases() {

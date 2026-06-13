@@ -1,9 +1,9 @@
 import Foundation
 
 public enum PowerAvailability: Equatable, Sendable {
-    case notRegistered                 // helper never installed
-    case requiresApproval              // user must approve in System Settings → Login Items
-    case unavailable(String)           // registration or connection error
+    case notRegistered  // helper never installed
+    case requiresApproval  // user must approve in System Settings → Login Items
+    case unavailable(String)  // registration or connection error
     case ready
 }
 
