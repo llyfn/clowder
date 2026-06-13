@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 @testable import ClowderKit
 
@@ -40,4 +41,34 @@ struct StatModulesTests {
         #expect(temps.headline == "—")
         #expect(temps.fanLine == "No Fans")
     }
+
+    @Test func cpuHistoryAccumulatesAndCaps() {
+        let cpu = CPUModule()
+        for _ in 0..<95 { cpu.refresh(snapshot) }
+        #expect(cpu.history.elements.count == 90)             // capped
+        #expect(cpu.history.elements.last != nil)
+    }
+
+    @Test func batteryDownsamplesByMinute() {
+        let defaults = UserDefaults(suiteName: "t.\(UUID().uuidString)")!
+        let mod = BatteryModule(config: ConfigStore(defaults: defaults), power: StubPower())
+        let base = Date(timeIntervalSince1970: 0)
+        func snap(_ t: TimeInterval, _ level: Int) -> SensorSnapshot {
+            SensorSnapshot(date: base.addingTimeInterval(t),
+                           battery: BatteryStats(levelPercent: level, isCharging: false, isOnAC: false))
+        }
+        mod.refresh(snap(0, 80))     // accepted (first)
+        mod.refresh(snap(30, 81))    // too soon -> ignored
+        mod.refresh(snap(61, 82))    // >=60s later -> accepted
+        #expect(mod.batteryHistory.map(\.level) == [80, 82])
+    }
+}
+
+@MainActor
+private final class StubPower: PowerControlling {
+    var availability: PowerAvailability { .ready }
+    func connect() {}
+    func setChargeLimit(enabled: Bool, percent: Int) async -> String? { nil }
+    func setFansAuto() async -> String? { nil }
+    func setFanTargets(_ rpms: [Double]) async -> String? { nil }
 }

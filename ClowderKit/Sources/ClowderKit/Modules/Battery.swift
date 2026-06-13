@@ -5,6 +5,10 @@ import SwiftUI
 public final class BatteryModule: Module {
     public let id = ModuleID.battery
     public private(set) var stats: BatteryStats?
+    public private(set) var batteryHistory: [BatteryPoint] = []
+    private var lastSampledAt: Date?
+    private let minSampleInterval: TimeInterval = 60
+    private let historyCap = 720    // 12h at 1/min
 
     public let config: ConfigStore
     private let power: any PowerControlling
@@ -16,6 +20,14 @@ public final class BatteryModule: Module {
 
     public func refresh(_ snapshot: SensorSnapshot) {
         stats = snapshot.battery
+        if let b = snapshot.battery {
+            let now = snapshot.date
+            if lastSampledAt == nil || now.timeIntervalSince(lastSampledAt!) >= minSampleInterval {
+                batteryHistory.append(BatteryPoint(date: now, level: b.levelPercent))
+                if batteryHistory.count > historyCap { batteryHistory.removeFirst(batteryHistory.count - historyCap) }
+                lastSampledAt = now
+            }
+        }
     }
 
     public var headline: String { stats.map { "\($0.levelPercent)%" } ?? "—" }
@@ -54,55 +66,7 @@ public final class BatteryModule: Module {
         power.connect()
     }
 
-    public var tileView: AnyView { AnyView(ChargeLimitTile(module: self)) }
-    public var barItemView: AnyView? { AnyView(Text(headline).monospacedDigit()) }
-}
-
-/// Wide control tile: battery status + limit toggle and stepper, or a helper-enable CTA.
-struct ChargeLimitTile: View {
-    let module: BatteryModule
-    @State private var pendingError: String?
-
-    var body: some View {
-        HStack {
-            // Two lines: title above, status below — keeps the title from
-            // wrapping when the stepper and toggle crowd the trailing edge.
-            VStack(alignment: .leading, spacing: 2) {
-                Label("Charge Limit", systemImage: "battery.75percent")
-                Text(module.headline + " · " + module.subline)
-                    .font(.caption).foregroundStyle(.secondary)
-                if let pendingError {
-                    Text(pendingError).font(.caption2).foregroundStyle(.red).lineLimit(1)
-                }
-            }
-            Spacer()
-            switch module.availability {
-            case .ready:
-                Stepper("\(module.config.power.chargeLimitPercent)%",
-                        value: Binding(
-                            get: { module.config.power.chargeLimitPercent },
-                            set: { newValue in
-                                Task { pendingError = await module.applyChargeLimit(
-                                    enabled: module.config.power.chargeLimitEnabled,
-                                    percent: newValue) }
-                            }),
-                        in: 50...100, step: 5)
-                    .font(.caption).fixedSize()
-                Toggle("", isOn: Binding(
-                    get: { module.config.power.chargeLimitEnabled },
-                    set: { on in
-                        Task { pendingError = await module.applyChargeLimit(
-                            enabled: on, percent: module.config.power.chargeLimitPercent) }
-                    }))
-                    .toggleStyle(.switch).labelsHidden()
-            case .requiresApproval:
-                Button("Approve in System Settings") { module.requestHelper() }
-                    .font(.caption)
-            default:
-                Button("Enable") { module.requestHelper() }
-                    .font(.caption)
-            }
-        }
-        .padding(12)
-    }
+    public var tileView: AnyView { AnyView(StatTile(label: "Battery", headline: headline,
+                                                    subline: subline, icon: "battery.100")) }
+    public var barItemView: AnyView? { AnyView(BarLabel(icon: "battery.100", text: headline)) }
 }
