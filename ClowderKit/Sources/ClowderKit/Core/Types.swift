@@ -62,6 +62,15 @@ public struct DiskStats: Equatable, Sendable {
     }
 }
 
+public struct DiskIORates: Equatable, Sendable {
+    public var readBytesPerSec: Double
+    public var writeBytesPerSec: Double
+    public init(readBytesPerSec: Double, writeBytesPerSec: Double) {
+        self.readBytesPerSec = readBytesPerSec
+        self.writeBytesPerSec = writeBytesPerSec
+    }
+}
+
 public struct BatteryStats: Equatable, Sendable {
     public var levelPercent: Int
     public var isCharging: Bool
@@ -101,12 +110,14 @@ public struct SensorSnapshot: Sendable {
     public var memory: MemoryStats?
     public var network: NetworkRates?
     public var disk: DiskStats?
+    public var diskIO: DiskIORates?
     public var battery: BatteryStats?
     public var temps: [TempReading]
     public var fans: [FanReading]
 
     public init(date: Date = Date(), cpu: CPUStats? = nil, memory: MemoryStats? = nil,
                 network: NetworkRates? = nil, disk: DiskStats? = nil,
+                diskIO: DiskIORates? = nil,
                 battery: BatteryStats? = nil,
                 temps: [TempReading] = [], fans: [FanReading] = []) {
         self.date = date
@@ -114,6 +125,7 @@ public struct SensorSnapshot: Sendable {
         self.memory = memory
         self.network = network
         self.disk = disk
+        self.diskIO = diskIO
         self.battery = battery
         self.temps = temps
         self.fans = fans
