@@ -30,10 +30,17 @@ public struct MemoryStats: Equatable, Sendable {
     public var usedBytes: UInt64
     public var totalBytes: UInt64
     public var pressure: MemoryPressure
-    public init(usedBytes: UInt64, totalBytes: UInt64, pressure: MemoryPressure) {
+    public var appBytes: UInt64
+    public var wiredBytes: UInt64
+    public var compressedBytes: UInt64
+    public init(usedBytes: UInt64, totalBytes: UInt64, pressure: MemoryPressure,
+                appBytes: UInt64 = 0, wiredBytes: UInt64 = 0, compressedBytes: UInt64 = 0) {
         self.usedBytes = usedBytes
         self.totalBytes = totalBytes
         self.pressure = pressure
+        self.appBytes = appBytes
+        self.wiredBytes = wiredBytes
+        self.compressedBytes = compressedBytes
     }
 }
 

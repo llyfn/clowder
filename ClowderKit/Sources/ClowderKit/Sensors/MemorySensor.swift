@@ -2,12 +2,12 @@ import Darwin
 import Foundation
 
 public struct MemorySample: Equatable, Sendable {
-    public var activeBytes: UInt64
+    public var appBytes: UInt64          // (internal - purgeable) pages × pageSize
     public var wiredBytes: UInt64
     public var compressedBytes: UInt64
     public var totalBytes: UInt64
-    public init(activeBytes: UInt64, wiredBytes: UInt64, compressedBytes: UInt64, totalBytes: UInt64) {
-        self.activeBytes = activeBytes; self.wiredBytes = wiredBytes
+    public init(appBytes: UInt64, wiredBytes: UInt64, compressedBytes: UInt64, totalBytes: UInt64) {
+        self.appBytes = appBytes; self.wiredBytes = wiredBytes
         self.compressedBytes = compressedBytes; self.totalBytes = totalBytes
     }
 }
@@ -18,10 +18,12 @@ public protocol MemorySource: Sendable {
 
 public enum MemoryStatsCalculator {
     public static func stats(from s: MemorySample) -> MemoryStats {
-        let used = s.activeBytes + s.wiredBytes + s.compressedBytes
+        let used = s.appBytes + s.wiredBytes + s.compressedBytes
         let fraction = s.totalBytes == 0 ? 0 : Double(used) / Double(s.totalBytes)
         let pressure: MemoryPressure = fraction >= 0.9 ? .critical : fraction >= 0.75 ? .warning : .ok
-        return MemoryStats(usedBytes: used, totalBytes: s.totalBytes, pressure: pressure)
+        return MemoryStats(usedBytes: used, totalBytes: s.totalBytes, pressure: pressure,
+                           appBytes: s.appBytes, wiredBytes: s.wiredBytes,
+                           compressedBytes: s.compressedBytes)
     }
 }
 
@@ -41,10 +43,14 @@ public struct DarwinMemorySource: MemorySource {
         var pageSize: vm_size_t = 0
         let psResult = host_page_size(mach_host_self(), &pageSize)
         guard psResult == KERN_SUCCESS else { throw SensorError.readFailed("host_page_size: \(psResult)") }
+        let pages = { (count: UInt32) in UInt64(count) * UInt64(pageSize) }
+        let internalBytes = pages(stats.internal_page_count)
+        let purgeableBytes = pages(stats.purgeable_count)
+        let app = internalBytes >= purgeableBytes ? internalBytes - purgeableBytes : 0
         return MemorySample(
-            activeBytes: UInt64(stats.active_count) * UInt64(pageSize),
-            wiredBytes: UInt64(stats.wire_count) * UInt64(pageSize),
-            compressedBytes: UInt64(stats.compressor_page_count) * UInt64(pageSize),
+            appBytes: app,
+            wiredBytes: pages(stats.wire_count),
+            compressedBytes: pages(stats.compressor_page_count),
             totalBytes: ProcessInfo.processInfo.physicalMemory
         )
     }

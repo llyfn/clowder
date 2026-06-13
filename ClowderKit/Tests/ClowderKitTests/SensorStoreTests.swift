@@ -15,7 +15,7 @@ private struct FailingCPU: CPUSource {
 }
 private struct FakeMemory: MemorySource {
     func sample() throws -> MemorySample {
-        MemorySample(activeBytes: 1, wiredBytes: 1, compressedBytes: 1, totalBytes: 10)
+        MemorySample(appBytes: 1, wiredBytes: 1, compressedBytes: 1, totalBytes: 10)
     }
 }
 private struct FakeNetwork: NetworkSource {
