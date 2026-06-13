@@ -10,7 +10,7 @@ public enum CharacterRenderer {
     public static func size(for character: RunnerCharacter) -> NSSize {
         switch character {
         case .clowder: NSSize(width: 46, height: 17)
-        case .cat, .dog, .rocket: NSSize(width: 26, height: 17)
+        case .cat: NSSize(width: 26, height: 17)
         }
     }
 
@@ -24,8 +24,6 @@ public enum CharacterRenderer {
                 switch character {
                 case .clowder: drawClowder(phase: phase)
                 case .cat: drawCat(phase: phase)
-                case .dog: drawDog(phase: phase)
-                case .rocket: drawRocket(phase: phase)
                 }
                 return true
             }
@@ -89,39 +87,6 @@ public enum CharacterRenderer {
         tail.lineWidth = 1.6
         tail.lineCapStyle = .round
         tail.stroke()
-    }
-
-    private static func drawDog(phase: Double) {
-        let body = NSBezierPath(roundedRect: NSRect(x: 3, y: 7, width: 17, height: 7),
-                                xRadius: 3.5, yRadius: 3.5)
-        body.fill()
-        NSBezierPath(ovalIn: NSRect(x: 18, y: 9, width: 7, height: 6)).fill()
-        // floppy ear
-        NSBezierPath(ovalIn: NSRect(x: 19, y: 12, width: 2.5, height: 4)).fill()
-        let tail = NSBezierPath()
-        tail.move(to: NSPoint(x: 3, y: 12))
-        tail.line(to: NSPoint(x: 1.5, y: 14 + CGFloat(sin(phase))))
-        tail.lineWidth = 1.5
-        tail.stroke()
-        drawGallopLegs(phase: phase, bounce: 0)
-    }
-
-    /// Rocket "runs" by bobbing and pulsing its exhaust flame.
-    private static func drawRocket(phase: Double) {
-        let bob = CGFloat(sin(phase)) * 1.5
-        let bodyRect = NSRect(x: 8, y: 5 + bob, width: 12, height: 7)
-        NSBezierPath(roundedRect: bodyRect, xRadius: 3.5, yRadius: 3.5).fill()
-        let nose = NSBezierPath()
-        nose.move(to: NSPoint(x: 20, y: 5 + bob))
-        nose.line(to: NSPoint(x: 25, y: 8.5 + bob))
-        nose.line(to: NSPoint(x: 20, y: 12 + bob))
-        nose.fill()
-        let flameLength = 3 + CGFloat(abs(sin(phase))) * 4
-        let flame = NSBezierPath()
-        flame.move(to: NSPoint(x: 8, y: 6.5 + bob))
-        flame.line(to: NSPoint(x: 8 - flameLength, y: 8.5 + bob))
-        flame.line(to: NSPoint(x: 8, y: 10.5 + bob))
-        flame.fill()
     }
 
     /// Gallop: back and front leg pairs swing out of phase; each foot lifts

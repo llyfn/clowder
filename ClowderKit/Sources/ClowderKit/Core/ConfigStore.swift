@@ -20,6 +20,15 @@ public struct GeneralConfig: Codable, Equatable, Sendable {
     public var pollInterval: TimeInterval = 2
     public var character: RunnerCharacter = .clowder
     public init() {}
+
+    private enum CodingKeys: String, CodingKey { case pollInterval, character }
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        pollInterval = try c.decodeIfPresent(TimeInterval.self, forKey: .pollInterval) ?? 2
+        // A removed/unknown runner (e.g. "dog", "rocket") decodes to clowder
+        // instead of failing the whole config load.
+        character = (try? c.decode(RunnerCharacter.self, forKey: .character)) ?? .clowder
+    }
 }
 
 public struct ModuleConfig: Codable, Equatable, Sendable {
